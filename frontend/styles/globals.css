@@ -1,0 +1,49 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --gold: #B8892A;
+  --gold-light: #F5E9C8;
+  --gold-mid: #D4A844;
+  --ink: #1A1714;
+  --ink2: #4A4540;
+  --ink3: #8A847C;
+  --surface: #FDFAF5;
+  --surface2: #F5EFE3;
+  --surface3: #EDE4D0;
+  --teal: #0F6E56;
+  --teal-light: #E1F5EE;
+  --purple: #534AB7;
+  --purple-light: #EEEDFE;
+  --coral: #993C1D;
+  --coral-light: #FAECE7;
+  --amber: #854F0B;
+  --amber-light: #FAEEDA;
+  --blue: #1E5FAA;
+  --blue-light: #E3EEF9;
+  --green: #2E7D32;
+  --green-light: #E8F5E9;
+  --rose: #9D174D;
+  --rose-light: #FCE7F3;
+  --cyan: #0891B2;
+  --cyan-light: #CFFAFE;
+  --radius: 14px;
+  --radius-sm: 8px;
+}
+
+html, body { height: 100%; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--surface);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+}
+
+input, button, select, textarea {
+  font-family: inherit;
+}
+
+button { cursor: pointer; border: none; background: none; }
+
+a { text-decoration: none; color: inherit; }
