@@ -5,7 +5,9 @@ import {
   createLink, updateLink, deleteLink,
   uploadQr, removeCustomQr,
   adminFetchAnnouncements, createAnnouncement,
-  updateAnnouncement, deleteAnnouncement
+  updateAnnouncement, deleteAnnouncement,
+  adminFetchGivingAccounts, createGivingAccount,
+  updateGivingAccount, deleteGivingAccount
 } from '../../lib/api'
 import { ensureProtocol } from '../../lib/utils'
 import styles from '../../styles/Admin.module.css'
@@ -13,6 +15,7 @@ import styles from '../../styles/Admin.module.css'
 const CATS = ['membership', 'new_members', 'testimony', 'books', 'connect', 'map', 'giving', 'devotion', 'counselling']
 const EMPTY_FORM = { name: '', desc: '', cat: 'membership', url: '', active: true }
 const EMPTY_ANNOUNCEMENT = { title: '', message: '', active: true }
+const EMPTY_GIVING = { label: '', account_number: '', bank_name: 'Access Bank', active: true }
 
 
 export default function Dashboard() {
@@ -38,10 +41,19 @@ export default function Dashboard() {
   const [annSaving, setAnnSaving] = useState(false)
   const [annDeleteConfirm, setAnnDeleteConfirm] = useState(null)
 
+  // Giving accounts state
+  const [givingAccounts, setGivingAccounts] = useState([])
+  const [givingModal, setGivingModal] = useState(null)  // null | 'add' | 'edit'
+  const [givingForm, setGivingForm] = useState(EMPTY_GIVING)
+  const [givingEditTarget, setGivingEditTarget] = useState(null)
+  const [givingSaving, setGivingSaving] = useState(false)
+  const [givingDeleteConfirm, setGivingDeleteConfirm] = useState(null)
+
   useEffect(() => {
     checkAuth().catch(() => router.push('/admin'))
     loadLinks()
     loadAnnouncements()
+    loadGivingAccounts()
   }, [])
 
   function showToast(msg, type = 'success') {
@@ -185,6 +197,65 @@ export default function Dashboard() {
     }
   }
 
+  // ── Giving Accounts ─────────────────────────────────────────────────────────
+
+  async function loadGivingAccounts() {
+    try {
+      const data = await adminFetchGivingAccounts()
+      setGivingAccounts(data)
+    } catch {
+      // silently fail
+    }
+  }
+
+  function openAddGiving() {
+    setGivingForm(EMPTY_GIVING)
+    setGivingEditTarget(null)
+    setGivingModal('add')
+  }
+
+  function openEditGiving(account) {
+    setGivingForm({
+      label: account.label,
+      account_number: account.account_number,
+      bank_name: account.bank_name,
+      active: account.active
+    })
+    setGivingEditTarget(account)
+    setGivingModal('edit')
+  }
+
+  async function handleSaveGiving() {
+    if (!givingForm.label || !givingForm.account_number) return
+    setGivingSaving(true)
+    try {
+      if (givingModal === 'add') {
+        await createGivingAccount(givingForm)
+        showToast('Account added!')
+      } else {
+        await updateGivingAccount(givingEditTarget.id, givingEditTarget.row_num, givingForm)
+        showToast('Account updated!')
+      }
+      setGivingModal(null)
+      loadGivingAccounts()
+    } catch (e) {
+      showToast(e.message, 'error')
+    } finally {
+      setGivingSaving(false)
+    }
+  }
+
+  async function handleDeleteGiving(account) {
+    try {
+      await deleteGivingAccount(account.id, account.row_num)
+      setGivingDeleteConfirm(null)
+      showToast('Account deleted.')
+      loadGivingAccounts()
+    } catch (e) {
+      showToast(e.message, 'error')
+    }
+  }
+
   return (
     <div className={styles.dashPage}>
       {/* Toast */}
@@ -221,6 +292,16 @@ export default function Dashboard() {
               <span className={styles.dashNavBadge}>{announcements.length}</span>
             )}
           </button>
+          <button
+            className={`${styles.dashNavItem} ${activeView === 'giving' ? styles.dashNavActive : ''}`}
+            onClick={() => setActiveView('giving')}
+          >
+            <span className={styles.dashNavIcon}>🏦</span>
+            <span>Account Numbers</span>
+            {givingAccounts.length > 0 && (
+              <span className={styles.dashNavBadge}>{givingAccounts.length}</span>
+            )}
+          </button>
         </nav>
 
         <div className={styles.dashSidebarFooter}>
@@ -237,7 +318,63 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className={styles.dashContent}>
-        {activeView === 'links' ? (
+        {activeView === 'giving' ? (
+          <>
+            {/* Account Numbers Header */}
+            <header className={styles.contentHeader}>
+              <h1 className={styles.contentTitle}>Account Numbers</h1>
+              <p className={styles.contentSubtitle}>Manage bank account details shown in the Account Numbers section</p>
+            </header>
+
+            <main className={styles.dashMain}>
+              <div className={styles.dashHeader}>
+                <span></span>
+                <button className={styles.addBtn} onClick={openAddGiving}>+ Add account</button>
+              </div>
+
+              <div className={styles.table}>
+                <div className={styles.tableHead} style={{ gridTemplateColumns: '1fr 1fr 1.5fr 100px 120px' }}>
+                  <span>Label</span>
+                  <span>Bank</span>
+                  <span>Account Number</span>
+                  <span>Status</span>
+                  <span>Actions</span>
+                </div>
+
+                {givingAccounts.length === 0 && (
+                  <div className={styles.tableEmpty}>No giving accounts yet — add your first one above.</div>
+                )}
+
+                {givingAccounts.map(account => (
+                  <div key={account.id} className={`${styles.tableRow} ${!account.active ? styles.rowHidden : ''}`} style={{ gridTemplateColumns: '1fr 1fr 1.5fr 100px 120px' }}>
+                    <div className={styles.cellName}>
+                      <span className={styles.linkName}>{account.label}</span>
+                    </div>
+
+                    <div>
+                      <span className={styles.bankName}>{account.bank_name}</span>
+                    </div>
+
+                    <div>
+                      <span className={styles.accountNumber}>{account.account_number}</span>
+                    </div>
+
+                    <div>
+                      <span className={`${styles.statusBadge} ${account.active ? styles.statusActive : styles.statusHidden}`}>
+                        {account.active ? 'Visible' : 'Hidden'}
+                      </span>
+                    </div>
+
+                    <div className={styles.cellActions}>
+                      <button className={styles.editBtn} onClick={() => openEditGiving(account)}>Edit</button>
+                      <button className={styles.deleteBtn} onClick={() => setGivingDeleteConfirm(account)}>Delete</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </main>
+          </>
+        ) : activeView === 'links' ? (
           <>
             {/* Links Header */}
             <header className={styles.contentHeader}>
@@ -478,6 +615,57 @@ export default function Dashboard() {
             <div className={styles.formActions}>
               <button className={styles.cancelBtn} onClick={() => setAnnDeleteConfirm(null)}>Cancel</button>
               <button className={styles.deleteBtnConfirm} onClick={() => handleDeleteAnnouncement(annDeleteConfirm)}>Yes, delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Giving Add / Edit Modal */}
+      {givingModal && (
+        <div className={styles.overlay} onClick={e => e.target === e.currentTarget && setGivingModal(null)}>
+          <div className={styles.formModal}>
+            <h2 className={styles.formTitle}>{givingModal === 'add' ? 'Add new account' : 'Edit account'}</h2>
+
+            <label className={styles.label}>Label *
+              <input className={styles.input} value={givingForm.label} onChange={e => setGivingForm(f => ({ ...f, label: e.target.value }))} placeholder="e.g. Offering, Rent, Tithe" />
+            </label>
+
+            <label className={styles.label}>Bank Name
+              <input className={styles.input} value={givingForm.bank_name} onChange={e => setGivingForm(f => ({ ...f, bank_name: e.target.value }))} placeholder="e.g. Access Bank" />
+            </label>
+
+            <label className={styles.label}>Account Number *
+              <input className={styles.input} value={givingForm.account_number} onChange={e => setGivingForm(f => ({ ...f, account_number: e.target.value }))} placeholder="e.g. 1234567890" />
+            </label>
+
+            <label className={styles.checkRow}>
+              <input type="checkbox" checked={givingForm.active} onChange={e => setGivingForm(f => ({ ...f, active: e.target.checked }))} />
+              Show in directory
+            </label>
+
+            <div className={styles.formActions}>
+              <button className={styles.cancelBtn} onClick={() => setGivingModal(null)}>Cancel</button>
+              <button
+                className={styles.saveBtn}
+                onClick={handleSaveGiving}
+                disabled={givingSaving || !givingForm.label || !givingForm.account_number}
+              >
+                {givingSaving ? 'Saving…' : givingModal === 'add' ? 'Add account' : 'Save changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Giving Delete confirm */}
+      {givingDeleteConfirm && (
+        <div className={styles.overlay} onClick={e => e.target === e.currentTarget && setGivingDeleteConfirm(null)}>
+          <div className={styles.confirmModal}>
+            <h2 className={styles.confirmTitle}>Delete "{givingDeleteConfirm.label}"?</h2>
+            <p className={styles.confirmText}>This will remove the account. This cannot be undone.</p>
+            <div className={styles.formActions}>
+              <button className={styles.cancelBtn} onClick={() => setGivingDeleteConfirm(null)}>Cancel</button>
+              <button className={styles.deleteBtnConfirm} onClick={() => handleDeleteGiving(givingDeleteConfirm)}>Yes, delete</button>
             </div>
           </div>
         </div>

@@ -545,6 +545,82 @@
 }
 .closeBtn:hover { background: var(--surface2); }
 
+/* ── Giving Section ─────────────────────────────────────────────────────── */
+.givingCards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 500px;
+}
+
+.givingCard {
+  background: white;
+  border-radius: var(--radius);
+  border: 0.5px solid var(--surface3);
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+}
+
+.givingBank {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem 1.25rem;
+  background: var(--green-light);
+  border-bottom: 0.5px solid var(--surface3);
+}
+
+.givingBankLogo {
+  font-size: 24px;
+}
+
+.givingBankName {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--green);
+}
+
+.givingAccount {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 1rem 1.25rem;
+}
+
+.givingLabel {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink3);
+  min-width: 70px;
+}
+
+.givingNumber {
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ink);
+  font-family: 'SF Mono', 'Consolas', monospace;
+  letter-spacing: 1px;
+  flex: 1;
+}
+
+.givingCopy {
+  padding: 6px 14px;
+  border-radius: var(--radius-sm);
+  border: 0.5px solid var(--surface3);
+  font-size: 12px;
+  font-weight: 500;
+  background: transparent;
+  color: var(--green);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.givingCopy:hover {
+  background: var(--green-light);
+  border-color: var(--green);
+}
+
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .footer {
   text-align: center;
@@ -679,5 +755,30 @@
     width: 28px;
     height: 28px;
     font-size: 14px;
+  }
+
+  .givingCard {
+    margin: 0 -0.5rem;
+    border-radius: 12px;
+  }
+
+  .givingBank {
+    padding: 0.875rem 1rem;
+  }
+
+  .givingBankName {
+    font-size: 16px;
+  }
+
+  .givingAccount {
+    padding: 1rem;
+  }
+
+  .givingNumber {
+    font-size: 16px;
+  }
+
+  .givingCopy {
+    padding: 6px 12px;
   }
 }

@@ -460,6 +460,19 @@
   overflow: hidden;
 }
 
+.bankName {
+  font-size: 13px;
+  color: var(--ink2);
+}
+
+.accountNumber {
+  font-size: 14px;
+  font-weight: 600;
+  font-family: 'SF Mono', 'Consolas', monospace;
+  letter-spacing: 0.5px;
+  color: var(--ink);
+}
+
 .checkRow {
   display: flex;
   align-items: center;

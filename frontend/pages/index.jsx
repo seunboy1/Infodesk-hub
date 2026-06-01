@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchLinks, getQrUrl, fetchAnnouncements } from '../lib/api'
+import { fetchLinks, getQrUrl, fetchAnnouncements, fetchGivingAccounts } from '../lib/api'
 import { ensureProtocol } from '../lib/utils'
 import styles from '../styles/Directory.module.css'
 
@@ -23,14 +23,17 @@ export default function Directory() {
   const [q, setQ] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [modal, setModal] = useState(null)
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(null)
   const inputRef = useRef()
 
   // Announcements
   const [announcements, setAnnouncements] = useState([])
   const [expandedAnn, setExpandedAnn] = useState({})
 
-  // View toggle: 'links' or 'announcements'
+  // Giving accounts
+  const [givingAccounts, setGivingAccounts] = useState([])
+
+  // View toggle: 'links', 'announcements', or 'giving'
   const [activeView, setActiveView] = useState('links')
 
   // Helper to detect announcement type from title
@@ -57,6 +60,10 @@ export default function Directory() {
     fetchAnnouncements()
       .then(setAnnouncements)
       .catch(() => {})
+
+    fetchGivingAccounts()
+      .then(setGivingAccounts)
+      .catch(() => {})
   }, [])
 
   const filtered = links.filter(l => {
@@ -67,10 +74,10 @@ export default function Directory() {
     return matchTab && matchQ
   })
 
-  function copyLink(url) {
+  function copyLink(url, id = 'link') {
     navigator.clipboard.writeText(url).then(() => {
-      setCopied(true)
-      setTimeout(() => setCopied(false), 2000)
+      setCopied(id)
+      setTimeout(() => setCopied(null), 2000)
     })
   }
 
@@ -102,6 +109,13 @@ export default function Directory() {
               <span className={styles.dashNavBadge}>{announcements.length}</span>
             )}
           </button>
+          <button
+            className={`${styles.dashNavItem} ${activeView === 'giving' ? styles.dashNavActive : ''}`}
+            onClick={() => setActiveView('giving')}
+          >
+            <span className={styles.dashNavIcon}>🏦</span>
+            <span>Account Numbers</span>
+          </button>
         </nav>
 
         <div className={styles.dashSidebarFooter}>
@@ -115,7 +129,45 @@ export default function Directory() {
 
       {/* Main Content */}
       <div className={styles.dashContent}>
-        {activeView === 'links' ? (
+        {activeView === 'giving' ? (
+          <>
+            {/* Account Numbers View */}
+            <header className={styles.contentHeader}>
+              <h1 className={styles.contentTitle}>Account Numbers</h1>
+              <p className={styles.contentSubtitle}>Bank account details for offerings and payments</p>
+            </header>
+
+            <main className={styles.main}>
+              {givingAccounts.length === 0 ? (
+                <div className={styles.empty}>
+                  <span>💝</span>
+                  <p>No giving accounts configured</p>
+                </div>
+              ) : (
+                <div className={styles.givingCards}>
+                  {givingAccounts.map(account => (
+                    <div key={account.id} className={styles.givingCard}>
+                      <div className={styles.givingBank}>
+                        <span className={styles.givingBankLogo}>🏦</span>
+                        <span className={styles.givingBankName}>{account.bank_name}</span>
+                      </div>
+                      <div className={styles.givingAccount}>
+                        <span className={styles.givingLabel}>{account.label}</span>
+                        <span className={styles.givingNumber}>{account.account_number}</span>
+                        <button
+                          className={styles.givingCopy}
+                          onClick={() => copyLink(account.account_number, account.id)}
+                        >
+                          {copied === account.id ? '✓' : 'Copy'}
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </main>
+          </>
+        ) : activeView === 'links' ? (
           <>
             {/* Links Header */}
             <header className={styles.contentHeader}>
@@ -201,9 +253,9 @@ export default function Directory() {
                             </button>
                             <button
                               className={styles.btn}
-                              onClick={(e) => { e.preventDefault(); copyLink(ensureProtocol(link.url)); }}
+                              onClick={(e) => { e.preventDefault(); copyLink(ensureProtocol(link.url), link.id); }}
                             >
-                              Copy Link
+                              {copied === link.id ? '✓ Copied' : 'Copy Link'}
                             </button>
                           </div>
                         </a>
@@ -293,9 +345,9 @@ export default function Directory() {
               />
             </div>
 
-            <div className={styles.urlRow} onClick={() => copyLink(ensureProtocol(modal.url))}>
+            <div className={styles.urlRow} onClick={() => copyLink(ensureProtocol(modal.url), 'modal')}>
               <span className={styles.urlText}>{ensureProtocol(modal.url)}</span>
-              <span className={styles.copyHint}>{copied ? '✓ Copied!' : 'Copy'}</span>
+              <span className={styles.copyHint}>{copied === 'modal' ? '✓ Copied!' : 'Copy'}</span>
             </div>
 
             <a href={ensureProtocol(modal.url)} target="_blank" rel="noopener noreferrer" className={styles.openBtn}>

@@ -136,3 +136,62 @@ def update_announcement(row_num: int, data: dict) -> None:
 def delete_announcement(row_num: int) -> None:
     ws = _get_announcements_worksheet()
     ws.delete_rows(row_num)
+
+
+# ── Giving Accounts ──────────────────────────────────────────────────────────
+
+GIVING_SHEET_NAME = "Giving"
+GIVING_HEADERS = ["id", "label", "account_number", "bank_name", "active"]
+
+
+def _get_giving_worksheet() -> gspread.Worksheet:
+    client = _get_client()
+    spreadsheet = client.open_by_key(settings.google_sheet_id)
+    try:
+        ws = spreadsheet.worksheet(GIVING_SHEET_NAME)
+    except gspread.WorksheetNotFound:
+        ws = spreadsheet.add_worksheet(title=GIVING_SHEET_NAME, rows=50, cols=len(GIVING_HEADERS))
+        ws.append_row(GIVING_HEADERS)
+    return ws
+
+
+def get_all_giving_accounts(include_hidden: bool = False) -> List[dict]:
+    ws = _get_giving_worksheet()
+    records = ws.get_all_records(expected_headers=GIVING_HEADERS)
+    result = []
+    for i, row in enumerate(records, start=2):  # row 1 = headers
+        if not include_hidden and str(row.get("active", "true")).lower() == "false":
+            continue
+        result.append({
+            "id": str(row.get("id", "")),
+            "label": row.get("label", ""),
+            "account_number": str(row.get("account_number", "")),
+            "bank_name": row.get("bank_name", "Access Bank"),
+            "active": str(row.get("active", "true")).lower() != "false",
+            "row_num": i,
+        })
+    return result
+
+
+def add_giving_account(account_id: str, label: str, account_number: str, bank_name: str) -> None:
+    ws = _get_giving_worksheet()
+    ws.append_row([account_id, label, account_number, bank_name, "true"])
+
+
+def update_giving_account(row_num: int, data: dict) -> None:
+    ws = _get_giving_worksheet()
+    ws.update(
+        f"A{row_num}:E{row_num}",
+        [[
+            data["id"],
+            data["label"],
+            data["account_number"],
+            data.get("bank_name", "Access Bank"),
+            "true" if data.get("active", True) else "false",
+        ]]
+    )
+
+
+def delete_giving_account(row_num: int) -> None:
+    ws = _get_giving_worksheet()
+    ws.delete_rows(row_num)

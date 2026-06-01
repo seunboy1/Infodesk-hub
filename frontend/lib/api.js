@@ -69,3 +69,21 @@ export const updateAnnouncement = (id, rowNum, data) =>
 
 export const deleteAnnouncement = (id, rowNum) =>
   request(`/admin/announcements/${id}?row_num=${rowNum}`, { method: 'DELETE' })
+
+// Public Giving
+export const fetchGivingAccounts = () => request('/giving')
+
+// Admin Giving
+export const adminFetchGivingAccounts = () => request('/admin/giving')
+
+export const createGivingAccount = (data) =>
+  request('/admin/giving', { method: 'POST', body: JSON.stringify(data) })
+
+export const updateGivingAccount = (id, rowNum, data) =>
+  request(`/admin/giving/${id}?row_num=${rowNum}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  })
+
+export const deleteGivingAccount = (id, rowNum) =>
+  request(`/admin/giving/${id}?row_num=${rowNum}`, { method: 'DELETE' })

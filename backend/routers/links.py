@@ -1,8 +1,8 @@
 from fastapi import APIRouter, HTTPException
 from fastapi.responses import Response
-from services.sheets import get_all_rows, get_all_announcements
+from services.sheets import get_all_rows, get_all_announcements, get_all_giving_accounts
 from services.qr import generate_qr_bytes
-from models import Link, Announcement
+from models import Link, Announcement, GivingAccount
 from typing import List
 
 router = APIRouter()
@@ -42,5 +42,14 @@ def get_announcements():
     """Return all active announcements for the public directory."""
     try:
         return get_all_announcements(include_hidden=False)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/giving", response_model=List[GivingAccount])
+def get_giving_accounts():
+    """Return all active giving accounts for the public directory."""
+    try:
+        return get_all_giving_accounts(include_hidden=False)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

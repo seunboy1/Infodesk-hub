@@ -3,11 +3,13 @@ from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Respons
 from typing import List
 from models import (
     LinkCreate, LinkUpdate, AdminLink, LoginRequest,
-    AnnouncementCreate, AnnouncementUpdate, AdminAnnouncement
+    AnnouncementCreate, AnnouncementUpdate, AdminAnnouncement,
+    GivingAccountCreate, GivingAccountUpdate, AdminGivingAccount
 )
 from services.sheets import (
     get_all_rows, add_row, update_row, update_qr_image, delete_row,
-    get_all_announcements, add_announcement, update_announcement, delete_announcement
+    get_all_announcements, add_announcement, update_announcement, delete_announcement,
+    get_all_giving_accounts, add_giving_account, update_giving_account, delete_giving_account
 )
 from services.qr import upload_custom_qr
 from auth import create_token, require_admin
@@ -168,6 +170,56 @@ def edit_announcement(
 def remove_announcement(announcement_id: str, row_num: int, authenticated: bool = Depends(require_admin)):
     try:
         delete_announcement(row_num)
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Giving Accounts CRUD ─────────────────────────────────────────────────────
+
+@router.get("/giving", response_model=List[AdminGivingAccount])
+def list_giving_accounts(authenticated: bool = Depends(require_admin)):
+    """Return all giving accounts including hidden ones."""
+    try:
+        return get_all_giving_accounts(include_hidden=True)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/giving", status_code=201)
+def create_giving_account(body: GivingAccountCreate, authenticated: bool = Depends(require_admin)):
+    try:
+        account_id = str(int(time.time() * 1000))
+        add_giving_account(account_id, body.label, body.account_number, body.bank_name)
+        return {"id": account_id}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.put("/giving/{account_id}")
+def edit_giving_account(
+    account_id: str,
+    body: GivingAccountUpdate,
+    row_num: int,
+    authenticated: bool = Depends(require_admin)
+):
+    try:
+        update_giving_account(row_num, {
+            "id": account_id,
+            "label": body.label,
+            "account_number": body.account_number,
+            "bank_name": body.bank_name,
+            "active": body.active,
+        })
+        return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/giving/{account_id}")
+def remove_giving_account(account_id: str, row_num: int, authenticated: bool = Depends(require_admin)):
+    try:
+        delete_giving_account(row_num)
         return {"ok": True}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

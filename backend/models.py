@@ -67,3 +67,32 @@ class Announcement(AnnouncementBase):
 class AdminAnnouncement(Announcement):
     """Announcement with row number for admin operations."""
     row_num: int
+
+
+# ── Giving Accounts ──────────────────────────────────────────────────────────
+
+class GivingAccountBase(BaseModel):
+    label: str  # e.g. "Offering", "Rent"
+    account_number: str
+    bank_name: str = "Access Bank"
+    active: bool = True
+
+
+class GivingAccountCreate(GivingAccountBase):
+    pass
+
+
+class GivingAccountUpdate(GivingAccountBase):
+    pass
+
+
+class GivingAccount(GivingAccountBase):
+    id: str
+
+    class Config:
+        from_attributes = True
+
+
+class AdminGivingAccount(GivingAccount):
+    """Giving account with row number for admin operations."""
+    row_num: int
