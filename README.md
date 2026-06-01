@@ -1,8 +1,8 @@
-# Info Desk Hub
+# CCI Ajah Info Desk Hub
 
-A link & QR code directory for the CCI information desk.
+A link & QR code directory with announcements for the CCI Ajah information desk.
 - **Frontend** — Next.js, deployed on Vercel
-- **Backend** — FastAPI (Python), deployed on Railway
+- **Backend** — FastAPI (Python), deployed on Render
 - **Database** — Google Sheets (your own spreadsheet)
 
 ---
@@ -13,11 +13,13 @@ A link & QR code directory for the CCI information desk.
 infodesk-hub/
 ├── frontend/                    # Next.js application
 │   ├── pages/
-│   │   ├── index.jsx           # Public directory
+│   │   ├── index.jsx           # Public directory (links + announcements)
 │   │   └── admin/
 │   │       ├── index.jsx       # Admin login
-│   │       └── dashboard.jsx   # Link management
-│   ├── lib/api.js              # API client
+│   │       └── dashboard.jsx   # Links & announcements management
+│   ├── lib/
+│   │   ├── api.js              # API client
+│   │   └── utils.js            # Shared utilities
 │   └── styles/                 # CSS modules
 │
 ├── backend/                     # FastAPI application
@@ -43,7 +45,7 @@ infodesk-hub/
 2. Name it **Info Desk Hub** (any name is fine)
 3. Copy the Sheet ID from the URL:
    `https://docs.google.com/spreadsheets/d/**THIS_PART**/edit`
-4. The app auto-creates the **Links** tab with headers on first run — nothing else to do
+4. The app auto-creates **Links** and **Announcements** tabs with headers on first run
 
 ### Step 2 — Google Service Account
 
@@ -79,12 +81,13 @@ uvicorn main:app --reload
 
 **.env values to fill in:**
 ```
-GOOGLE_SHEET_ID=           # from Step 1
-GOOGLE_SERVICE_ACCOUNT_JSON=   # paste entire JSON from Step 2 as one line
-ADMIN_PASSWORD=            # choose a strong password
-JWT_SECRET=                # any 64-char random string
-CLOUDINARY_URL=cloudinary://649514925712897:SXHQI8IEX_HZ45zjWkwfSm-gBrc@ds2sg3fci
+GOOGLE_SHEET_ID=              # from Step 1
+GOOGLE_SERVICE_ACCOUNT_JSON=  # paste entire JSON from Step 2 as one line
+ADMIN_PASSWORD=               # choose a strong password
+JWT_SECRET=                   # any 64-char random string
+CLOUDINARY_URL=               # cloudinary://API_KEY:API_SECRET@CLOUD_NAME
 FRONTEND_URL=http://localhost:3000
+SECURE_COOKIES=false          # set true in production (HTTPS)
 ```
 
 ### Step 5 — Frontend setup
@@ -104,22 +107,24 @@ npm run dev
 
 ## Deployment
 
-### Backend → Railway
+### Backend → Render
 
-1. Push `backend/` to a GitHub repo (can be a monorepo)
-2. Go to [railway.app](https://railway.app) → New Project → Deploy from GitHub
-3. Select your repo, set root to `backend/`
-4. Add all your `.env` variables in Railway's **Variables** tab
-5. Set start command: `uvicorn main:app --host 0.0.0.0 --port $PORT`
-6. Copy the public URL Railway gives you (e.g. `https://infodesk-api.railway.app`)
+1. Push to GitHub
+2. Go to [render.com](https://render.com) → New → Web Service
+3. Connect your repo, set:
+   - **Root Directory:** `backend`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `uvicorn main:app --host 0.0.0.0 --port $PORT`
+4. Add environment variables (same as `.env` plus `SECURE_COOKIES=true`)
+5. Deploy → Copy the URL (e.g. `https://infodesk-api.onrender.com`)
 
 ### Frontend → Vercel
 
 1. Go to [vercel.com](https://vercel.com) → New Project → Import GitHub repo
 2. Set root directory to `frontend/`
-3. Add environment variable: `NEXT_PUBLIC_API_URL=https://infodesk-api.railway.app`
-4. Also update `FRONTEND_URL` in Railway to your Vercel URL
-5. Deploy — done
+3. Add environment variable: `NEXT_PUBLIC_API_URL=https://your-api.onrender.com`
+4. Deploy
+5. Go back to Render and update `FRONTEND_URL` to your Vercel URL
 
 ---
 
@@ -128,18 +133,23 @@ npm run dev
 ### Admin panel
 - Go to `your-vercel-url/admin`
 - Enter your admin password
-- **Add a link** — fill name, description, category, URL → click Add
-  - QR code is auto-generated from the URL
-- **Upload a custom QR** — if you already have a printed QR code, click the ↑ button on that row to upload the image
-- **Edit a link** — if a URL changes, click Edit, update the URL, save. QR updates automatically
-- **Hide a link** — edit it and uncheck "Show in directory" — it disappears from the public page but stays in the sheet
-- **Delete a link** — removes it from the sheet permanently
+
+**Links:**
+- **Add a link** — fill name, description, category, URL → click Add (QR auto-generated)
+- **Upload a custom QR** — click the ↑ button to upload an existing QR image
+- **Edit a link** — update details, QR updates automatically if using auto-generate
+- **Hide a link** — uncheck "Show in directory" to hide from public view
+- **Delete a link** — removes it permanently
+
+**Announcements:**
+- **Add announcement** — fill title and message
+- **Edit/Hide/Delete** — same as links
+- Announcements auto-categorize based on title keywords (service, prayer, meeting, etc.)
 
 ### Public directory
-- Team members go to `your-vercel-url`
-- Search by name or category
-- Click **QR Code** to see and screenshot the QR
-- Click **Copy Link** to copy the URL to clipboard
+- Go to `your-vercel-url`
+- **Links tab** — search by name or category, view QR codes, copy links
+- **Announcements tab** — view latest announcements with expandable messages
 
 ---
 
@@ -155,14 +165,25 @@ npm run dev
 
 ## Google Sheet columns reference
 
+### Links sheet
+
 | Column | Name | Description |
 |--------|------|-------------|
 | A | id | Auto-generated timestamp ID — don't edit |
 | B | name | Display name on the card |
 | C | desc | Short description |
-| D | cat | Category: `membership`, `forms`, `testimony`, `books`, `connect` |
+| D | cat | Category: `membership`, `new_members`, `testimony`, `books`, `connect`, `map`, `giving`, `devotion`, `counselling` |
 | E | url | The link URL |
 | F | qr_image | Cloudinary URL of uploaded QR (blank = auto-generate) |
 | G | active | `true` = visible, `false` = hidden |
+
+### Announcements sheet
+
+| Column | Name | Description |
+|--------|------|-------------|
+| A | id | Auto-generated timestamp ID — don't edit |
+| B | title | Announcement title |
+| C | message | Announcement message body |
+| D | active | `true` = visible, `false` = hidden |
 
 You can bulk-add rows directly in the sheet — the app picks them up immediately.
