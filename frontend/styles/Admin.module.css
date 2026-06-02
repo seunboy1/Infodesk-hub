@@ -690,4 +690,227 @@
   .dashMain {
     padding: 1rem;
   }
+
+  /* Table card layout on mobile */
+  .tableRow {
+    padding: 1rem;
+    gap: 12px;
+  }
+
+  .cellName {
+    gap: 4px;
+  }
+
+  .linkName {
+    font-size: 15px;
+  }
+
+  .linkDesc {
+    font-size: 12px;
+  }
+
+  .editBtn,
+  .deleteBtn {
+    padding: 8px 14px;
+    font-size: 13px;
+  }
+
+  .addBtn {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+
+  .statusBadge {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+}
+
+/* ── Small Screens (below 420px) ───────────────────────────────────────── */
+@media (max-width: 420px) {
+  .dashNav {
+    padding: 0.375rem;
+  }
+
+  .dashNavItem {
+    padding: 9px;
+  }
+
+  .dashNavIcon {
+    font-size: 19px;
+  }
+
+  .dashSidebarFooter {
+    padding: 0.375rem;
+  }
+
+  .dashFooterLink,
+  .logoutBtn {
+    padding: 7px 10px;
+    font-size: 11.5px;
+  }
+
+  .contentHeader {
+    padding: 0.875rem;
+  }
+
+  .contentTitle {
+    font-size: 19px;
+  }
+
+  .contentSubtitle {
+    font-size: 12.5px;
+  }
+
+  .dashMain {
+    padding: 0.875rem;
+  }
+
+  .addBtn {
+    padding: 9px 14px;
+    font-size: 13.5px;
+  }
+
+  .tableRow {
+    padding: 0.9375rem;
+    gap: 11px;
+  }
+
+  .linkName {
+    font-size: 14.5px;
+  }
+
+  .linkDesc {
+    font-size: 11.5px;
+  }
+
+  .editBtn,
+  .deleteBtn {
+    padding: 7px 12px;
+    font-size: 12.5px;
+  }
+
+  .statusBadge {
+    font-size: 11px;
+    padding: 3.5px 9px;
+  }
+}
+
+/* ── Extra Small Screens (below 360px) ─────────────────────────────────── */
+@media (max-width: 360px) {
+  .dashNav {
+    padding: 0.25rem;
+  }
+
+  .dashNavItem {
+    padding: 8px;
+  }
+
+  .dashNavIcon {
+    font-size: 18px;
+  }
+
+  .dashSidebarFooter {
+    padding: 0.25rem;
+  }
+
+  .dashFooterLink,
+  .logoutBtn {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .contentHeader {
+    padding: 0.75rem;
+  }
+
+  .contentTitle {
+    font-size: 18px;
+  }
+
+  .contentSubtitle {
+    font-size: 12px;
+  }
+
+  .dashMain {
+    padding: 0.75rem;
+  }
+
+  .dashHeader {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .addBtn {
+    width: 100%;
+    text-align: center;
+  }
+
+  .tableRow {
+    padding: 0.875rem;
+    gap: 10px;
+  }
+
+  .linkName {
+    font-size: 14px;
+  }
+
+  .linkDesc {
+    font-size: 11px;
+  }
+
+  .catBadge {
+    font-size: 9px;
+    padding: 2px 6px;
+  }
+
+  .editBtn,
+  .deleteBtn {
+    padding: 6px 10px;
+    font-size: 12px;
+  }
+
+  .statusBadge {
+    font-size: 10px;
+    padding: 3px 8px;
+  }
+
+  .annMessage {
+    font-size: 11px;
+  }
+
+  .bankName {
+    font-size: 12px;
+  }
+
+  .accountNumber {
+    font-size: 13px;
+  }
+
+  /* Modals */
+  .formModal,
+  .confirmModal {
+    padding: 1.25rem;
+  }
+
+  .formTitle {
+    font-size: 18px;
+  }
+
+  .confirmTitle {
+    font-size: 16px;
+  }
+
+  .input, .select, .textarea {
+    padding: 10px;
+    font-size: 14px;
+  }
+
+  .cancelBtn,
+  .saveBtn,
+  .deleteBtnConfirm {
+    padding: 10px;
+    font-size: 13px;
+  }
 }

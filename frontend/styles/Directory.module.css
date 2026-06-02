@@ -15,12 +15,59 @@
   top: 0;
   bottom: 0;
   z-index: 50;
+  transition: width 0.25s ease;
+}
+
+.dashSidebarCollapsed {
+  width: 64px;
+}
+
+.sidebarToggle {
+  position: absolute;
+  right: -12px;
+  top: 24px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--ink);
+  border: 2px solid var(--surface3);
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  transition: transform 0.25s ease, background 0.15s;
+  z-index: 51;
+}
+
+.sidebarToggle:hover {
+  background: var(--ink2);
+}
+
+.sidebarToggleCollapsed {
+  transform: rotate(180deg);
 }
 
 .dashBrand {
   padding: 1.5rem 1.25rem;
   border-bottom: 1px solid rgba(255,255,255,0.1);
   white-space: nowrap;
+  overflow: hidden;
+  transition: padding 0.25s ease;
+}
+
+.dashBrandCollapsed {
+  padding: 1.5rem 0.75rem;
+  text-align: center;
+}
+
+.dashBrandCollapsed .dashLogo {
+  display: none;
+}
+
+.dashBrandCollapsed .dashLogoAccent {
+  font-size: 16px;
 }
 
 .dashLogo {
@@ -82,6 +129,33 @@
   font-weight: 600;
   padding: 2px 8px;
   border-radius: 10px;
+  transition: opacity 0.15s;
+}
+
+/* Collapsed nav styles */
+.dashNavCollapsed .dashNavItem {
+  justify-content: center;
+  padding: 12px;
+}
+
+.dashNavCollapsed .dashNavIcon {
+  font-size: 20px;
+}
+
+.dashNavCollapsed .dashNavItem > span:not(.dashNavIcon) {
+  display: none;
+}
+
+.dashNavCollapsed .dashNavBadge {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  padding: 2px 5px;
+  font-size: 9px;
+}
+
+.dashNavCollapsed .dashNavItem {
+  position: relative;
 }
 
 .dashSidebarFooter {
@@ -125,6 +199,20 @@
   opacity: 1;
 }
 
+/* Collapsed footer styles */
+.dashFooterCollapsed .dashAdminLink {
+  justify-content: center;
+  padding: 12px;
+}
+
+.dashFooterCollapsed .dashAdminLink > span:not(.dashAdminIcon) {
+  display: none;
+}
+
+.dashFooterCollapsed .dashAdminIcon {
+  font-size: 18px;
+}
+
 .dashContent {
   flex: 1;
   margin-left: 220px;
@@ -132,6 +220,11 @@
   flex-direction: column;
   min-height: 100vh;
   background: var(--surface);
+  transition: margin-left 0.25s ease;
+}
+
+.dashContentCollapsed {
+  margin-left: 64px;
 }
 
 /* ── Content Header ───────────────────────────────────────────────────────── */
@@ -159,10 +252,24 @@
 }
 
 /* ── Search ─────────────────────────────────────────────────────────────── */
+/* Mobile search row - hidden on desktop */
+/* Search row with dropdown - shown at all sizes */
+.mobileSearchRow {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1rem;
+}
+
+/* Desktop search wrapper - hidden, using mobileSearchRow instead */
+.desktopSearchWrap {
+  display: none;
+}
+
 .searchWrap {
   position: relative;
-  margin-bottom: 1rem;
-  max-width: 500px;
+  flex: 1;
 }
 .searchIcon {
   position: absolute;
@@ -197,13 +304,70 @@
   cursor: pointer;
 }
 
-/* ── Tabs ────────────────────────────────────────────────────────────────── */
-.tabs {
+/* Category dropdown for mobile */
+.catSelect {
+  padding: 12px 36px 12px 14px;
+  border: 1px solid var(--surface3);
+  border-radius: 12px;
+  background: white;
+  font-size: 15px;
+  color: var(--ink);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23666' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.catSelect:focus {
+  outline: none;
+  border-color: var(--gold-mid);
+}
+
+/* View toggle in search row */
+.mobileViewToggle {
   display: flex;
-  gap: 6px;
-  overflow-x: auto;
-  padding-bottom: 0.75rem;
-  scrollbar-width: none;
+  border: 1px solid var(--surface3);
+  border-radius: 10px;
+  overflow: hidden;
+  background: white;
+  flex-shrink: 0;
+}
+
+/* Header spacer - for Announcements and Account Numbers views */
+.mobileHeaderSpacer {
+  display: block;
+  margin-bottom: 1rem;
+}
+
+.mobileCount {
+  font-size: 14px;
+  color: var(--ink3);
+}
+
+/* Filter row - category dropdown + view toggle */
+.mobileFilterRow {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.mobileViewToggle .viewBtn {
+  padding: 10px 12px;
+  border: none;
+  border-radius: 0;
+}
+
+.mobileViewToggle .viewBtn:not(:last-child) {
+  border-right: 1px solid var(--surface3);
+}
+
+/* ── Tabs - hidden, using dropdown instead ──────────────────────────────── */
+.tabs {
+  display: none;
 }
 .tabs::-webkit-scrollbar { display: none; }
 
@@ -235,13 +399,6 @@
 .status { text-align: center; padding: 3rem; color: var(--ink3); font-size: 14px; }
 .statusError { text-align: center; padding: 2rem; color: var(--coral); font-size: 14px; }
 
-.resultCount {
-  font-size: 12px;
-  color: var(--ink3);
-  font-style: italic;
-  margin-bottom: 1rem;
-}
-
 .empty {
   text-align: center;
   padding: 4rem 1rem;
@@ -250,11 +407,125 @@
 .empty span { font-size: 2rem; display: block; margin-bottom: 0.5rem; }
 .empty p { font-size: 14px; }
 
+/* ── View Controls - hidden, using toggle in search row ─────────────────── */
+.viewControls {
+  display: none;
+}
+
+.resultCount {
+  font-size: 13px;
+  color: var(--ink3);
+  margin: 0;
+}
+
+.viewToggle {
+  display: flex;
+  border: 1px solid var(--surface3);
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.viewBtn {
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--ink3);
+  transition: background 0.15s, color 0.15s;
+}
+
+.viewBtn:not(:last-child) {
+  border-right: 1px solid var(--surface3);
+}
+
+.viewBtn:hover {
+  background: var(--surface2);
+}
+
+.viewBtnActive {
+  background: var(--ink);
+  color: white;
+}
+
+.viewBtnActive:hover {
+  background: var(--ink);
+}
+
+.viewIcon {
+  width: 16px;
+  height: 16px;
+}
+
 /* ── Grid ────────────────────────────────────────────────────────────────── */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
   gap: 14px;
+}
+
+/* ── List View ──────────────────────────────────────────────────────────── */
+.list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.listCard {
+  background: white;
+  border: 0.5px solid var(--surface3);
+  border-radius: var(--radius);
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  transition: border-color 0.15s, box-shadow 0.15s;
+  cursor: pointer;
+  text-decoration: none;
+  color: inherit;
+}
+
+.listCard:hover {
+  border-color: var(--gold-mid);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+}
+
+.listCardContent {
+  flex: 1;
+  min-width: 0;
+}
+
+.listCardTop {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.listCardName {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listCardDesc {
+  font-size: 13px;
+  color: var(--ink3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.listCardActions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 /* ── Card ────────────────────────────────────────────────────────────────── */
@@ -304,10 +575,9 @@
   font-size: 12px;
   color: var(--ink3);
   line-height: 1.5;
-  flex: 1;
 }
 
-.cardActions { display: flex; gap: 6px; margin-top: 4px; }
+.cardActions { display: flex; gap: 6px; margin-top: auto; padding-top: 8px; }
 
 .btn {
   flex: 1;
@@ -631,100 +901,200 @@
 }
 
 /* ── Mobile Responsive ──────────────────────────────────────────────────── */
-@media (max-width: 768px) {
+@media (max-width: 769px) {
+  /* Sidebar - compact on tablet */
   .dashSidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    flex-direction: row;
-    align-items: center;
-    padding: 0;
+    width: 22px;
   }
 
   .dashBrand {
-    padding: 1rem;
-    border-bottom: none;
-    border-right: 1px solid rgba(255,255,255,0.1);
+    padding: 0.25rem 0;
+    text-align: center;
   }
 
-  .dashNav {
-    flex-direction: row;
-    padding: 0.5rem;
-    flex: 1;
-    overflow-x: auto;
-  }
-
-  .dashNavItem {
-    padding: 8px 12px;
-    white-space: nowrap;
-  }
-
-  .dashSidebarFooter {
-    padding: 0.5rem;
-    border-top: none;
-    border-left: 1px solid rgba(255,255,255,0.1);
-  }
-
-  .dashAdminLink {
-    padding: 8px 12px;
-    gap: 6px;
-    font-size: 12px;
-  }
-
-  .dashAdminArrow {
+  .dashLogo {
     display: none;
   }
 
+  .dashLogoAccent {
+    font-size: 6px;
+  }
+
+  .dashNav {
+    padding: 0.1rem 0;
+  }
+
+  .dashNavItem {
+    justify-content: center;
+    padding: 3px 0;
+    position: relative;
+  }
+
+  .dashNavIcon {
+    font-size: 10px;
+  }
+
+  .dashNavItem > span:not(.dashNavIcon) {
+    display: none;
+  }
+
+  .dashNavBadge {
+    display: none;
+  }
+
+  .dashSidebarFooter {
+    padding: 0.1rem 0;
+  }
+
+  .dashAdminLink {
+    justify-content: center;
+    padding: 3px 0;
+  }
+
+  .dashAdminLink > span:not(.dashAdminIcon) {
+    display: none;
+  }
+
+  .dashAdminIcon {
+    font-size: 8px;
+  }
+
   .dashContent {
-    margin-left: 0;
+    margin-left: 22px;
   }
 
-  .dashLayout {
-    flex-direction: column;
+  .sidebarToggle {
+    display: none;
   }
 
+  /* Content header */
+  .contentHeader {
+    padding: 1.25rem 1rem;
+  }
+
+  .contentTitle {
+    font-size: 26px;
+  }
+
+  .contentSubtitle {
+    font-size: 14px;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Grid */
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  }
+
+  /* Tablet: Adjust search row sizes */
+  .mobileCount {
+    font-size: 12px;
+  }
+
+  .mobileSearchRow .search {
+    padding: 10px 36px;
+    font-size: 14px;
+    border-radius: 10px;
+  }
+
+  .mobileSearchRow .searchIcon {
+    font-size: 16px;
+    left: 12px;
+  }
+
+  .mobileSearchRow .clear {
+    font-size: 14px;
+    right: 10px;
+  }
+
+  .catSelect {
+    padding: 10px 28px 10px 12px;
+    font-size: 13px;
+    border-radius: 10px;
+    min-width: 140px;
+  }
+
+  .mobileViewToggle .viewBtn {
+    padding: 8px 10px;
+  }
+
+  .mobileViewToggle .viewIcon {
+    width: 14px;
+    height: 14px;
   }
 }
 
 @media (max-width: 480px) {
-  .dashBrand {
-    display: none;
-  }
-
-  .dashNavItem span:not(.dashNavIcon):not(.dashNavBadge) {
-    display: none;
-  }
-
-  .dashNavItem {
-    padding: 10px;
-    justify-content: center;
-  }
-
-  .dashNavIcon {
-    font-size: 20px;
-  }
-
-  .dashAdminLink span:not(.dashAdminIcon) {
-    display: none;
-  }
-
-  .dashAdminLink {
-    padding: 10px;
-    justify-content: center;
-  }
-
-  .dashAdminIcon {
-    font-size: 18px;
-  }
-
+  /* Header */
   .contentHeader {
-    padding: 1rem;
+    padding: 1.25rem 1rem;
   }
 
   .contentTitle {
-    font-size: 20px;
+    font-size: 28px;
+  }
+
+  .contentSubtitle {
+    font-size: 15px;
+    margin-bottom: 0.25rem;
+  }
+
+  /* Mobile: Stack search row vertically */
+  .mobileSearchRow {
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 0.75rem;
+  }
+
+  .mobileHeaderSpacer {
+    margin-bottom: 0.75rem;
+  }
+
+  .mobileCount {
+    font-size: 11px;
+  }
+
+  .mobileSearchRow .searchWrap {
+    width: 100%;
+  }
+
+  .mobileSearchRow .search {
+    padding: 8px 32px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .mobileSearchRow .searchIcon {
+    font-size: 14px;
+    left: 10px;
+  }
+
+  .mobileSearchRow .clear {
+    font-size: 12px;
+    right: 8px;
+  }
+
+  /* Filter row adjustments */
+  .mobileFilterRow {
+    gap: 6px;
+    align-items: stretch;
+  }
+
+  .catSelect {
+    flex: 1;
+    padding: 7px 24px 7px 8px;
+    font-size: 12px;
+    min-width: 0;
+    border-radius: 8px;
+  }
+
+  .mobileViewToggle .viewBtn {
+    padding: 6px 8px;
+  }
+
+  .mobileViewToggle .viewIcon {
+    width: 12px;
+    height: 12px;
   }
 
   .main {
@@ -733,22 +1103,443 @@
 
   .grid {
     grid-template-columns: 1fr;
-  }
-
-  .annTimeline {
     gap: 12px;
   }
 
+  /* Cards on mobile */
+  .card {
+    padding: 0.75rem;
+    gap: 6px;
+    border-radius: 10px;
+  }
+
+  .cardName {
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.3;
+  }
+
+  .cardDesc {
+    font-size: 11px;
+    line-height: 1.4;
+    color: var(--ink2);
+  }
+
+  .catTag {
+    font-size: 9px;
+    padding: 3px 8px;
+  }
+
+  /* Buttons on mobile */
+  .btn {
+    padding: 8px 8px;
+    font-size: 12px;
+    border-radius: 6px;
+  }
+
+  .cardActions {
+    gap: 8px;
+    margin-top: 8px;
+  }
+
+  /* List view on mobile */
+  .list {
+    gap: 14px;
+  }
+
+  .listCard {
+    padding: 1.25rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    border-radius: 14px;
+  }
+
+  .listCardTop {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .listCardName {
+    font-size: 18px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .listCardDesc {
+    font-size: 14px;
+    white-space: normal;
+    line-height: 1.6;
+  }
+
+  .listCardActions {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .listCardActions .btn {
+    flex: 1;
+  }
+
+  /* Announcements - matching sizes */
+  .annTimeline {
+    gap: 14px;
+  }
+
+  .annItem {
+    border-radius: 14px;
+  }
+
   .annContent {
-    padding: 1rem;
+    padding: 1.25rem 1.25rem 1.25rem 1rem;
   }
 
   .annTitle {
-    font-size: 16px;
+    font-size: 18px;
   }
 
   .annMessage {
+    font-size: 14px;
+    line-height: 1.6;
+  }
+
+  .annIcon {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+
+  .annTypeBadge {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+
+  /* Giving - matching sizes */
+  .givingCards {
+    gap: 14px;
+  }
+
+  .givingCard {
+    border-radius: 14px;
+  }
+
+  .givingBank {
+    padding: 1rem 1.25rem;
+  }
+
+  .givingBankLogo {
+    font-size: 28px;
+  }
+
+  .givingBankName {
+    font-size: 18px;
+  }
+
+  .givingAccount {
+    padding: 1rem 1.25rem;
+  }
+
+  .givingNumber {
+    font-size: 18px;
+  }
+
+  .givingCopy {
+    padding: 12px 18px;
+    font-size: 15px;
+  }
+
+  .givingLabel {
+    font-size: 14px;
+  }
+}
+
+/* ── Small Screens (below 420px) ───────────────────────────────────────── */
+@media (max-width: 420px) {
+  /* Header */
+  .contentHeader {
+    padding: 1rem 0.875rem;
+  }
+
+  .contentTitle {
+    font-size: 26px;
+  }
+
+  .contentSubtitle {
+    font-size: 14px;
+    margin-bottom: 0.2rem;
+  }
+
+  /* Search row */
+  .mobileSearchRow {
+    gap: 8px;
+    margin-bottom: 0.625rem;
+  }
+
+  .mobileHeaderSpacer {
+    margin-bottom: 0.625rem;
+  }
+
+  .mobileFilterRow {
+    gap: 8px;
+  }
+
+  .mobileCount {
+    font-size: 10px;
+  }
+
+  .mobileSearchRow .search {
+    padding: 7px 30px;
+    font-size: 12px;
+  }
+
+  .catSelect {
+    padding: 6px 22px 6px 7px;
+    font-size: 11px;
+  }
+
+  .mobileViewToggle .viewBtn {
+    padding: 5px 7px;
+  }
+
+  .mobileViewToggle .viewIcon {
+    width: 11px;
+    height: 11px;
+  }
+
+  .viewIcon {
+    width: 16px;
+    height: 16px;
+  }
+
+  .main {
+    padding: 0.875rem;
+  }
+
+  /* Cards - slightly smaller than 480px */
+  .card {
+    padding: 0.7rem;
+    gap: 5px;
+    border-radius: 9px;
+  }
+
+  .cardName {
+    font-size: 13.5px;
+  }
+
+  .cardDesc {
+    font-size: 10.5px;
+  }
+
+  .btn {
+    padding: 7px 7px;
+    font-size: 11.5px;
+    border-radius: 5px;
+  }
+
+  .cardActions {
+    gap: 7px;
+    margin-top: 7px;
+  }
+
+  /* List - slightly smaller than 480px */
+  .listCard {
+    padding: 0.7rem;
+    gap: 10px;
+    border-radius: 9px;
+  }
+
+  .listCardName {
+    font-size: 13.5px;
+  }
+
+  .listCardDesc {
+    font-size: 10.5px;
+  }
+
+  /* Announcements - slightly smaller than 480px */
+  .annContent {
+    padding: 0.875rem;
+  }
+
+  .annTitle {
+    font-size: 15.5px;
+  }
+
+  .annMessage {
+    font-size: 12px;
+  }
+
+  .annIcon {
+    width: 30px;
+    height: 30px;
+    font-size: 15px;
+  }
+
+  .annTypeBadge {
+    font-size: 9px;
+    padding: 3.5px 9px;
+  }
+
+  /* Giving - slightly smaller than 480px */
+  .givingBank {
+    padding: 0.75rem 0.875rem;
+  }
+
+  .givingBankLogo {
+    font-size: 22px;
+  }
+
+  .givingBankName {
+    font-size: 14.5px;
+  }
+
+  .givingAccount {
+    padding: 0.75rem 0.875rem;
+  }
+
+  .givingNumber {
+    font-size: 15px;
+  }
+
+  .givingCopy {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+
+  .givingLabel {
+    font-size: 12px;
+  }
+
+  .footer {
+    padding: 1rem;
+    font-size: 10px;
+  }
+}
+
+/* ── Extra Small Screens (below 360px) ─────────────────────────────────── */
+@media (max-width: 360px) {
+  /* Smaller header */
+  .contentHeader {
+    padding: 1rem 0.75rem;
+  }
+
+  .contentTitle {
+    font-size: 24px;
+  }
+
+  .contentSubtitle {
+    font-size: 14px;
+    margin-bottom: 0.15rem;
+  }
+
+  /* Smaller search row */
+  .mobileSearchRow {
+    gap: 6px;
+    margin-bottom: 0.5rem;
+  }
+
+  .mobileHeaderSpacer {
+    margin-bottom: 0.5rem;
+  }
+
+  .mobileFilterRow {
+    gap: 6px;
+  }
+
+  .mobileCount {
+    font-size: 9px;
+  }
+
+  .mobileSearchRow .search {
+    padding: 6px 28px;
+    font-size: 11px;
+  }
+
+  .mobileSearchRow .searchIcon {
+    font-size: 12px;
+    left: 8px;
+  }
+
+  .catSelect {
+    padding: 5px 20px 5px 6px;
+    font-size: 10px;
+  }
+
+  .mobileViewToggle .viewBtn {
+    padding: 4px 6px;
+  }
+
+  .mobileViewToggle .viewIcon {
+    width: 10px;
+    height: 10px;
+  }
+
+  .viewIcon {
+    width: 14px;
+    height: 14px;
+  }
+
+  .main {
+    padding: 0.75rem;
+  }
+
+  /* Smallest cards */
+  .card {
+    padding: 0.625rem;
+    gap: 4px;
+    border-radius: 8px;
+  }
+
+  .cardName {
     font-size: 13px;
+  }
+
+  .cardDesc {
+    font-size: 10px;
+  }
+
+  .catTag {
+    font-size: 8px;
+    padding: 2px 6px;
+  }
+
+  .btn {
+    padding: 6px 6px;
+    font-size: 11px;
+    border-radius: 5px;
+  }
+
+  .cardActions {
+    gap: 6px;
+    margin-top: 6px;
+  }
+
+  /* List view - smallest */
+  .listCard {
+    padding: 0.625rem;
+    gap: 8px;
+    border-radius: 8px;
+  }
+
+  .listCardName {
+    font-size: 13px;
+  }
+
+  .listCardDesc {
+    font-size: 10px;
+  }
+
+  /* Announcements - smallest */
+  .annContent {
+    padding: 0.75rem;
+  }
+
+  .annTitle {
+    font-size: 14px;
+  }
+
+  .annMessage {
+    font-size: 11px;
   }
 
   .annIcon {
@@ -757,28 +1548,48 @@
     font-size: 14px;
   }
 
-  .givingCard {
-    margin: 0 -0.5rem;
-    border-radius: 12px;
+  .annTypeBadge {
+    font-size: 8px;
+    padding: 3px 8px;
   }
 
+  /* Giving - smallest */
   .givingBank {
-    padding: 0.875rem 1rem;
+    padding: 0.625rem 0.75rem;
+  }
+
+  .givingBankLogo {
+    font-size: 20px;
   }
 
   .givingBankName {
-    font-size: 16px;
+    font-size: 13px;
   }
 
   .givingAccount {
-    padding: 1rem;
+    padding: 0.625rem 0.75rem;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .givingLabel {
+    font-size: 11px;
+    min-width: auto;
+    width: 100%;
   }
 
   .givingNumber {
-    font-size: 16px;
+    font-size: 14px;
+    flex: 1;
   }
 
   .givingCopy {
-    padding: 6px 12px;
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+
+  .footer {
+    padding: 0.875rem;
+    font-size: 9px;
   }
 }
