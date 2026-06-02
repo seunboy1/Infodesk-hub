@@ -52,8 +52,6 @@
 .dashBrand {
   padding: 1.5rem 1.25rem;
   border-bottom: 1px solid rgba(255,255,255,0.1);
-  white-space: nowrap;
-  overflow: hidden;
   transition: padding 0.25s ease;
 }
 
@@ -904,11 +902,11 @@
 @media (max-width: 769px) {
   /* Sidebar - compact on tablet */
   .dashSidebar {
-    width: 22px;
+    width: 44px;
   }
 
   .dashBrand {
-    padding: 0.25rem 0;
+    padding: 0.5rem 0;
     text-align: center;
   }
 
@@ -917,21 +915,21 @@
   }
 
   .dashLogoAccent {
-    font-size: 6px;
+    font-size: 9px;
   }
 
   .dashNav {
-    padding: 0.1rem 0;
+    padding: 0.25rem 0;
   }
 
   .dashNavItem {
     justify-content: center;
-    padding: 3px 0;
+    padding: 8px 4px;
     position: relative;
   }
 
   .dashNavIcon {
-    font-size: 10px;
+    font-size: 18px;
   }
 
   .dashNavItem > span:not(.dashNavIcon) {
@@ -943,12 +941,12 @@
   }
 
   .dashSidebarFooter {
-    padding: 0.1rem 0;
+    padding: 0.25rem 0;
   }
 
   .dashAdminLink {
     justify-content: center;
-    padding: 3px 0;
+    padding: 8px 4px;
   }
 
   .dashAdminLink > span:not(.dashAdminIcon) {
@@ -956,11 +954,11 @@
   }
 
   .dashAdminIcon {
-    font-size: 8px;
+    font-size: 14px;
   }
 
   .dashContent {
-    margin-left: 22px;
+    margin-left: 44px;
   }
 
   .sidebarToggle {

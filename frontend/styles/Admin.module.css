@@ -96,7 +96,6 @@
 .dashBrand {
   padding: 1.5rem 1.25rem;
   border-bottom: 1px solid rgba(255,255,255,0.1);
-  white-space: nowrap;
 }
 
 .dashLogo {
@@ -562,19 +561,32 @@
 
 /* ── Mobile Responsive ──────────────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .tableHead,
+  .tableRow {
+    grid-template-columns: 2fr 1fr 1.5fr 60px 70px 100px;
+    gap: 8px;
+    padding: 10px 12px;
+  }
+}
+
+/* ── Tablet (compact sidebar) ──────────────────────────────────────────── */
+@media (max-width: 769px) {
+  /* Sidebar - compact on tablet (matching Directory) */
   .dashSidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    flex-direction: row;
-    align-items: center;
-    padding: 0;
+    width: 44px;
   }
 
   .dashBrand {
-    padding: 1rem;
-    border-bottom: none;
-    border-right: 1px solid rgba(255,255,255,0.1);
+    padding: 0.5rem 0;
+    text-align: center;
+  }
+
+  .dashLogo {
+    display: none;
+  }
+
+  .dashLogoAccent {
+    font-size: 9px;
   }
 
   .dashLogoSub {
@@ -582,45 +594,73 @@
   }
 
   .dashNav {
-    flex-direction: row;
-    padding: 0.5rem;
-    flex: 1;
-    overflow-x: auto;
+    padding: 0.25rem 0;
   }
 
   .dashNavItem {
-    padding: 8px 12px;
-    white-space: nowrap;
+    justify-content: center;
+    padding: 8px 4px;
+    position: relative;
+  }
+
+  .dashNavIcon {
+    font-size: 18px;
+  }
+
+  .dashNavItem > span:not(.dashNavIcon) {
+    display: none;
+  }
+
+  .dashNavBadge {
+    display: none;
   }
 
   .dashSidebarFooter {
-    padding: 0.5rem;
-    border-top: none;
-    border-left: 1px solid rgba(255,255,255,0.1);
-    flex-direction: row;
-    gap: 6px;
+    padding: 0.25rem 0;
   }
 
-  .dashFooterLink,
+  .dashFooterLink {
+    justify-content: center;
+    padding: 8px 4px;
+  }
+
+  .dashFooterLink > span:first-child {
+    font-size: 14px;
+  }
+
+  .dashFooterLink > span:not(:first-child) {
+    display: none;
+  }
+
   .logoutBtn {
-    padding: 8px 12px;
-    gap: 6px;
-    font-size: 12px;
+    justify-content: center;
+    padding: 8px 4px;
+  }
+
+  .logoutBtn > span:first-child {
+    font-size: 14px;
+  }
+
+  .logoutBtn > span:not(:first-child) {
+    display: none;
   }
 
   .dashContent {
-    margin-left: 0;
+    margin-left: 44px;
   }
 
-  .dashPage {
-    flex-direction: column;
+  /* Content header - matching Directory */
+  .contentHeader {
+    padding: 1.25rem 1rem;
   }
 
-  .tableHead,
-  .tableRow {
-    grid-template-columns: 2fr 1fr 1.5fr 60px 70px 100px;
-    gap: 8px;
-    padding: 10px 12px;
+  .contentTitle {
+    font-size: 26px;
+  }
+
+  .contentSubtitle {
+    font-size: 14px;
+    margin-bottom: 0.25rem;
   }
 }
 
@@ -657,28 +697,6 @@
 }
 
 @media (max-width: 480px) {
-  .dashBrand {
-    display: none;
-  }
-
-  .dashNavItem span:not(.dashNavIcon):not(.dashNavBadge) {
-    display: none;
-  }
-
-  .dashNavItem {
-    padding: 10px;
-    justify-content: center;
-  }
-
-  .dashNavIcon {
-    font-size: 20px;
-  }
-
-  .dashFooterLink span:first-child,
-  .logoutBtn span:first-child {
-    display: none;
-  }
-
   .contentHeader {
     padding: 1rem;
   }
@@ -728,28 +746,6 @@
 
 /* ── Small Screens (below 420px) ───────────────────────────────────────── */
 @media (max-width: 420px) {
-  .dashNav {
-    padding: 0.375rem;
-  }
-
-  .dashNavItem {
-    padding: 9px;
-  }
-
-  .dashNavIcon {
-    font-size: 19px;
-  }
-
-  .dashSidebarFooter {
-    padding: 0.375rem;
-  }
-
-  .dashFooterLink,
-  .logoutBtn {
-    padding: 7px 10px;
-    font-size: 11.5px;
-  }
-
   .contentHeader {
     padding: 0.875rem;
   }
@@ -798,28 +794,6 @@
 
 /* ── Extra Small Screens (below 360px) ─────────────────────────────────── */
 @media (max-width: 360px) {
-  .dashNav {
-    padding: 0.25rem;
-  }
-
-  .dashNavItem {
-    padding: 8px;
-  }
-
-  .dashNavIcon {
-    font-size: 18px;
-  }
-
-  .dashSidebarFooter {
-    padding: 0.25rem;
-  }
-
-  .dashFooterLink,
-  .logoutBtn {
-    padding: 6px 8px;
-    font-size: 11px;
-  }
-
   .contentHeader {
     padding: 0.75rem;
   }
