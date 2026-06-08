@@ -33,7 +33,7 @@ def login(body: LoginRequest, response: Response):
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        samesite="lax",
+        samesite="none",  # Changed from "lax" to "none" for cross-origin
         secure=settings.secure_cookies,
         max_age=COOKIE_MAX_AGE,
     )
