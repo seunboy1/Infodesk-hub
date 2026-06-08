@@ -1,5 +1,17 @@
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
+// Helper to trigger on-demand revalidation
+async function triggerRevalidation() {
+  try {
+    const secret = process.env.NEXT_PUBLIC_REVALIDATE_SECRET
+    if (!secret) return // Skip if no secret configured
+
+    await fetch(`/api/revalidate?secret=${secret}`)
+  } catch (error) {
+    console.error('Failed to trigger revalidation:', error)
+  }
+}
+
 async function request(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
     credentials: 'include',
@@ -30,17 +42,26 @@ export const checkAuth = () =>
 // Admin CRUD
 export const adminFetchLinks = () => request('/admin/links')
 
-export const createLink = (data) =>
-  request('/admin/links', { method: 'POST', body: JSON.stringify(data) })
+export const createLink = async (data) => {
+  const result = await request('/admin/links', { method: 'POST', body: JSON.stringify(data) })
+  await triggerRevalidation()
+  return result
+}
 
-export const updateLink = (id, rowNum, data) =>
-  request(`/admin/links/${id}?row_num=${rowNum}`, {
+export const updateLink = async (id, rowNum, data) => {
+  const result = await request(`/admin/links/${id}?row_num=${rowNum}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   })
+  await triggerRevalidation()
+  return result
+}
 
-export const deleteLink = (id, rowNum) =>
-  request(`/admin/links/${id}?row_num=${rowNum}`, { method: 'DELETE' })
+export const deleteLink = async (id, rowNum) => {
+  const result = await request(`/admin/links/${id}?row_num=${rowNum}`, { method: 'DELETE' })
+  await triggerRevalidation()
+  return result
+}
 
 export const uploadQr = (id, rowNum, file) => {
   const fd = new FormData()
@@ -58,17 +79,26 @@ export const removeCustomQr = (id, rowNum) =>
 // Admin Announcements
 export const adminFetchAnnouncements = () => request('/admin/announcements')
 
-export const createAnnouncement = (data) =>
-  request('/admin/announcements', { method: 'POST', body: JSON.stringify(data) })
+export const createAnnouncement = async (data) => {
+  const result = await request('/admin/announcements', { method: 'POST', body: JSON.stringify(data) })
+  await triggerRevalidation()
+  return result
+}
 
-export const updateAnnouncement = (id, rowNum, data) =>
-  request(`/admin/announcements/${id}?row_num=${rowNum}`, {
+export const updateAnnouncement = async (id, rowNum, data) => {
+  const result = await request(`/admin/announcements/${id}?row_num=${rowNum}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   })
+  await triggerRevalidation()
+  return result
+}
 
-export const deleteAnnouncement = (id, rowNum) =>
-  request(`/admin/announcements/${id}?row_num=${rowNum}`, { method: 'DELETE' })
+export const deleteAnnouncement = async (id, rowNum) => {
+  const result = await request(`/admin/announcements/${id}?row_num=${rowNum}`, { method: 'DELETE' })
+  await triggerRevalidation()
+  return result
+}
 
 // Public Giving
 export const fetchGivingAccounts = () => request('/giving')
@@ -76,14 +106,23 @@ export const fetchGivingAccounts = () => request('/giving')
 // Admin Giving
 export const adminFetchGivingAccounts = () => request('/admin/giving')
 
-export const createGivingAccount = (data) =>
-  request('/admin/giving', { method: 'POST', body: JSON.stringify(data) })
+export const createGivingAccount = async (data) => {
+  const result = await request('/admin/giving', { method: 'POST', body: JSON.stringify(data) })
+  await triggerRevalidation()
+  return result
+}
 
-export const updateGivingAccount = (id, rowNum, data) =>
-  request(`/admin/giving/${id}?row_num=${rowNum}`, {
+export const updateGivingAccount = async (id, rowNum, data) => {
+  const result = await request(`/admin/giving/${id}?row_num=${rowNum}`, {
     method: 'PUT',
     body: JSON.stringify(data),
   })
+  await triggerRevalidation()
+  return result
+}
 
-export const deleteGivingAccount = (id, rowNum) =>
-  request(`/admin/giving/${id}?row_num=${rowNum}`, { method: 'DELETE' })
+export const deleteGivingAccount = async (id, rowNum) => {
+  const result = await request(`/admin/giving/${id}?row_num=${rowNum}`, { method: 'DELETE' })
+  await triggerRevalidation()
+  return result
+}

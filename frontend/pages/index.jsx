@@ -16,10 +16,8 @@ const CATS = {
 }
 
 
-export default function Directory() {
-  const [links, setLinks] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
+export default function Directory({ links: initialLinks, announcements: initialAnnouncements, givingAccounts: initialGivingAccounts }) {
+  const [links, setLinks] = useState(initialLinks || [])
   const [q, setQ] = useState('')
   const [activeTab, setActiveTab] = useState('all')
   const [modal, setModal] = useState(null)
@@ -27,11 +25,11 @@ export default function Directory() {
   const inputRef = useRef()
 
   // Announcements
-  const [announcements, setAnnouncements] = useState([])
+  const [announcements, setAnnouncements] = useState(initialAnnouncements || [])
   const [expandedAnn, setExpandedAnn] = useState({})
 
   // Giving accounts
-  const [givingAccounts, setGivingAccounts] = useState([])
+  const [givingAccounts, setGivingAccounts] = useState(initialGivingAccounts || [])
 
   // View toggle: 'links', 'announcements', or 'giving'
   const [activeView, setActiveView] = useState('links')
@@ -56,21 +54,6 @@ export default function Directory() {
   function toggleExpand(id) {
     setExpandedAnn(prev => ({ ...prev, [id]: !prev[id] }))
   }
-
-  useEffect(() => {
-    fetchLinks()
-      .then(setLinks)
-      .catch(e => setError(e.message))
-      .finally(() => setLoading(false))
-
-    fetchAnnouncements()
-      .then(setAnnouncements)
-      .catch(() => {})
-
-    fetchGivingAccounts()
-      .then(setGivingAccounts)
-      .catch(() => {})
-  }, [])
 
   const filtered = links.filter(l => {
     const matchTab = activeTab === 'all' || l.cat === activeTab
@@ -277,12 +260,7 @@ export default function Directory() {
                 </div>
               </div>
 
-              {loading && <div className={styles.status}>Loading resources…</div>}
-              {error && <div className={styles.statusError}>Could not load links: {error}</div>}
-
-              {!loading && !error && (
-                <>
-                  <div className={styles.viewControls}>
+              <div className={styles.viewControls}>
                     <p className={styles.resultCount}>
                       {filtered.length === links.length
                         ? `${links.length} resources`
@@ -399,8 +377,6 @@ export default function Directory() {
                       })}
                     </div>
                   )}
-                </>
-              )}
             </main>
           </>
         ) : (
@@ -500,4 +476,35 @@ export default function Directory() {
       )}
     </div>
   )
+}
+
+// Fetch data at build time and revalidate every 5 minutes
+export async function getStaticProps() {
+  try {
+    const [links, announcements, givingAccounts] = await Promise.all([
+      fetchLinks(),
+      fetchAnnouncements().catch(() => []),
+      fetchGivingAccounts().catch(() => [])
+    ])
+
+    return {
+      props: {
+        links,
+        announcements,
+        givingAccounts
+      },
+      revalidate: 300 // Rebuild every 5 minutes (300 seconds)
+    }
+  } catch (error) {
+    console.error('Error fetching data:', error)
+    // Return empty arrays if fetch fails
+    return {
+      props: {
+        links: [],
+        announcements: [],
+        givingAccounts: []
+      },
+      revalidate: 60 // Retry more frequently if failed
+    }
+  }
 }
