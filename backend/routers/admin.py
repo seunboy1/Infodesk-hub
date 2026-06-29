@@ -1,5 +1,7 @@
+import uuid
 import time
-from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Response
+from collections import defaultdict
+from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Response, Request
 from typing import List
 from models import (
     LinkCreate, LinkUpdate, AdminLink, LoginRequest,
@@ -21,11 +23,30 @@ settings = get_settings()
 COOKIE_NAME = "infodesk_token"
 COOKIE_MAX_AGE = 60 * 60 * 8  # 8 hours
 
+# Rate limiting for login: max 5 attempts per minute per IP
+LOGIN_ATTEMPTS = defaultdict(list)
+MAX_ATTEMPTS = 5
+WINDOW_SECONDS = 60
+
+
+def check_rate_limit(ip: str):
+    """Check if IP has exceeded login rate limit."""
+    now = time.time()
+    # Clean old attempts
+    LOGIN_ATTEMPTS[ip] = [t for t in LOGIN_ATTEMPTS[ip] if now - t < WINDOW_SECONDS]
+    if len(LOGIN_ATTEMPTS[ip]) >= MAX_ATTEMPTS:
+        raise HTTPException(status_code=429, detail="Too many login attempts. Try again later.")
+    LOGIN_ATTEMPTS[ip].append(now)
+
 
 # ── Auth ──────────────────────────────────────────────────────────────────────
 
 @router.post("/login")
-def login(body: LoginRequest, response: Response):
+def login(body: LoginRequest, request: Request, response: Response):
+    # Rate limit by IP
+    client_ip = request.client.host if request.client else "unknown"
+    check_rate_limit(client_ip)
+
     if body.password != settings.admin_password:
         raise HTTPException(status_code=401, detail="Wrong password")
     token = create_token()
@@ -65,7 +86,7 @@ def list_links(authenticated: bool = Depends(require_admin)):
 @router.post("/links", status_code=201)
 def create_link(body: LinkCreate, authenticated: bool = Depends(require_admin)):
     try:
-        link_id = str(int(time.time() * 1000))
+        link_id = str(uuid.uuid4())
         add_row(link_id, body.name, body.desc, body.cat, body.url)
         return {"id": link_id}
     except Exception as e:
@@ -140,7 +161,7 @@ def list_announcements(authenticated: bool = Depends(require_admin)):
 @router.post("/announcements", status_code=201)
 def create_announcement(body: AnnouncementCreate, authenticated: bool = Depends(require_admin)):
     try:
-        announcement_id = str(int(time.time() * 1000))
+        announcement_id = str(uuid.uuid4())
         add_announcement(announcement_id, body.title, body.message)
         return {"id": announcement_id}
     except Exception as e:
@@ -189,7 +210,7 @@ def list_giving_accounts(authenticated: bool = Depends(require_admin)):
 @router.post("/giving", status_code=201)
 def create_giving_account(body: GivingAccountCreate, authenticated: bool = Depends(require_admin)):
     try:
-        account_id = str(int(time.time() * 1000))
+        account_id = str(uuid.uuid4())
         add_giving_account(account_id, body.label, body.account_number, body.bank_name)
         return {"id": account_id}
     except Exception as e:

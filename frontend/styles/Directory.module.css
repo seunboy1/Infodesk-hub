@@ -563,6 +563,7 @@
 .tag_green  { background: var(--green-light);  color: var(--green); }
 .tag_rose   { background: var(--rose-light);   color: var(--rose); }
 .tag_cyan   { background: var(--cyan-light);   color: var(--cyan); }
+.tag_indigo { background: var(--indigo-light); color: var(--indigo); }
 
 .cardName {
   font-size: 14px;

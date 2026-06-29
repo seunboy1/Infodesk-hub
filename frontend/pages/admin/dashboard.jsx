@@ -12,8 +12,8 @@ import {
 import { ensureProtocol } from '../../lib/utils'
 import styles from '../../styles/Admin.module.css'
 
-const CATS = ['membership', 'new_members', 'testimony', 'books', 'connect', 'map', 'giving', 'devotion', 'counselling']
-const EMPTY_FORM = { name: '', desc: '', cat: 'membership', url: '', active: true }
+const CATS = ['membership', 'new_members', 'testimony', 'books', 'connect', 'map', 'giving', 'devotion', 'counselling', 'discipleship']
+const EMPTY_FORM = { name: '', desc: '', cat: 'membership', url: '', active: true, customCat: '' }
 const EMPTY_ANNOUNCEMENT = { title: '', message: '', active: true }
 const EMPTY_GIVING = { label: '', account_number: '', bank_name: 'Access Bank', active: true }
 
@@ -79,20 +79,38 @@ export default function Dashboard() {
   }
 
   function openEdit(link) {
-    setForm({ name: link.name, desc: link.desc, cat: link.cat, url: link.url, active: link.active })
+    // Check if category is a known one or custom
+    const isKnownCat = CATS.includes(link.cat)
+    setForm({
+      name: link.name,
+      desc: link.desc,
+      cat: isKnownCat ? link.cat : 'other',
+      url: link.url,
+      active: link.active,
+      customCat: isKnownCat ? '' : link.cat
+    })
     setEditTarget(link)
     setModal('edit')
   }
 
   async function handleSave() {
     if (!form.name || !form.url) return
+    if (form.cat === 'other' && !form.customCat) return
     setSaving(true)
+
+    // Use custom category if "other" is selected
+    const saveData = {
+      ...form,
+      cat: form.cat === 'other' ? form.customCat : form.cat
+    }
+    delete saveData.customCat
+
     try {
       if (modal === 'add') {
-        await createLink(form)
+        await createLink(saveData)
         showToast('Link added!')
       } else {
-        await updateLink(editTarget.id, editTarget.row_num, form)
+        await updateLink(editTarget.id, editTarget.row_num, saveData)
         showToast('Link updated!')
       }
       setModal(null)
@@ -531,10 +549,25 @@ export default function Dashboard() {
             </label>
 
             <label className={styles.label}>Category
-              <select className={styles.select} value={form.cat} onChange={e => setForm(f => ({ ...f, cat: e.target.value }))}>
+              <select className={styles.select} value={form.cat} onChange={e => setForm(f => ({ ...f, cat: e.target.value, customCat: '' }))}>
                 {CATS.map(c => <option key={c} value={c}>{c}</option>)}
+                <option value="other">+ Add new category</option>
               </select>
             </label>
+
+            {form.cat === 'other' && (
+              <label className={styles.label}>New Category Name *
+                <input
+                  className={styles.input}
+                  value={form.customCat}
+                  onChange={e => setForm(f => ({ ...f, customCat: e.target.value.toLowerCase().replace(/\s+/g, '_') }))}
+                  placeholder="e.g. youth, outreach, media"
+                />
+                <small style={{ color: '#666', fontSize: '11px', marginTop: '4px', display: 'block' }}>
+                  Will be saved as: {form.customCat || 'category_name'}
+                </small>
+              </label>
+            )}
 
             <label className={styles.label}>URL *
               <input className={styles.input} value={form.url} onChange={e => setForm(f => ({ ...f, url: e.target.value }))} placeholder="https://…" />
@@ -550,7 +583,7 @@ export default function Dashboard() {
               <button
                 className={styles.saveBtn}
                 onClick={handleSave}
-                disabled={saving || !form.name || !form.url}
+                disabled={saving || !form.name || !form.url || (form.cat === 'other' && !form.customCat)}
               >
                 {saving ? 'Saving…' : modal === 'add' ? 'Add link' : 'Save changes'}
               </button>

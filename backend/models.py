@@ -1,13 +1,11 @@
 from pydantic import BaseModel
-from typing import Optional, Literal
-
-CategoryType = Literal["membership", "new_members", "testimony", "books", "connect", "map", "giving", "devotion", "counselling"]
+from typing import Optional
 
 
 class LinkBase(BaseModel):
     name: str
     desc: str = ""
-    cat: CategoryType = "membership"
+    cat: str = "membership"  # Any category string allowed (e.g. membership, discipleship, custom ones)
     url: str
     active: bool = True
 

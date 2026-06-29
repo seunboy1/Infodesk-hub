@@ -1,18 +1,40 @@
 import { useState, useEffect, useRef } from 'react'
-import { fetchLinks, getQrUrl, fetchAnnouncements, fetchGivingAccounts } from '../lib/api'
+import { QRCodeSVG } from 'qrcode.react'
+import { fetchLinks, fetchAnnouncements, fetchGivingAccounts } from '../lib/api'
 import { ensureProtocol } from '../lib/utils'
 import styles from '../styles/Directory.module.css'
 
 const CATS = {
-  membership:  { label: 'Membership',  color: 'teal',   icon: '👥' },
-  new_members: { label: 'New Members', color: 'purple', icon: '🌟' },
-  testimony:  { label: 'Testimony',  color: 'coral',  icon: '❤️' },
-  books:      { label: 'Books',      color: 'amber',  icon: '📖' },
-  connect:    { label: 'Connect',    color: 'gold',   icon: '🤝' },
-  map:        { label: 'Map',        color: 'blue',   icon: '📍' },
-  giving:     { label: 'Giving',     color: 'green',  icon: '💝' },
-  devotion:    { label: 'Devotion',    color: 'rose', icon: '🙏' },
-  counselling: { label: 'Counselling', color: 'cyan', icon: '💬' },
+  membership:   { label: 'Membership',   color: 'teal',   icon: '👥' },
+  new_members:  { label: 'New Members',  color: 'purple', icon: '🌟' },
+  testimony:    { label: 'Testimony',    color: 'coral',  icon: '❤️' },
+  books:        { label: 'Books',        color: 'amber',  icon: '📖' },
+  connect:      { label: 'Connect',      color: 'gold',   icon: '🤝' },
+  map:          { label: 'Map',          color: 'blue',   icon: '📍' },
+  giving:       { label: 'Giving',       color: 'green',  icon: '💝' },
+  devotion:     { label: 'Devotion',     color: 'rose',   icon: '🙏' },
+  counselling:  { label: 'Counselling',  color: 'cyan',   icon: '💬' },
+  discipleship: { label: 'Discipleship', color: 'indigo', icon: '📚' },
+}
+
+// Available colors for custom categories
+const COLORS = ['teal', 'purple', 'coral', 'amber', 'gold', 'blue', 'green', 'rose', 'cyan', 'indigo']
+
+// Get category info - returns known category or generates consistent styling for custom ones
+function getCatInfo(catKey) {
+  if (CATS[catKey]) return CATS[catKey]
+
+  // Generate consistent color based on category name
+  let hash = 0
+  for (let i = 0; i < catKey.length; i++) {
+    hash = catKey.charCodeAt(i) + ((hash << 5) - hash)
+  }
+  const colorIndex = Math.abs(hash) % COLORS.length
+
+  // Format label: replace underscores with spaces and capitalize
+  const label = catKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+
+  return { label, color: COLORS[colorIndex], icon: '📌' }
 }
 
 
@@ -303,7 +325,7 @@ export default function Directory({ links: initialLinks, announcements: initialA
                   {viewMode === 'grid' ? (
                     <div className={styles.grid}>
                       {filtered.map(link => {
-                        const cat = CATS[link.cat] || CATS.membership
+                        const cat = getCatInfo(link.cat)
                         return (
                           <a
                             key={link.id}
@@ -340,7 +362,7 @@ export default function Directory({ links: initialLinks, announcements: initialA
                   ) : (
                     <div className={styles.list}>
                       {filtered.map(link => {
-                        const cat = CATS[link.cat] || CATS.membership
+                        const cat = getCatInfo(link.cat)
                         return (
                           <a
                             key={link.id}
@@ -443,23 +465,35 @@ export default function Directory({ links: initialLinks, announcements: initialA
       </div>
 
       {/* QR Modal */}
-      {modal && (
+      {modal && (() => {
+        const modalCat = getCatInfo(modal.cat)
+        return (
         <div className={styles.overlay} onClick={e => e.target === e.currentTarget && setModal(null)}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <span className={`${styles.modalIcon} ${styles[`tag_${CATS[modal.cat]?.color}`]}`}>
-                {CATS[modal.cat]?.icon}
+              <span className={`${styles.modalIcon} ${styles[`tag_${modalCat.color}`]}`}>
+                {modalCat.icon}
               </span>
               <h2 className={styles.modalTitle}>{modal.name}</h2>
             </div>
             {modal.desc && <p className={styles.modalDesc}>{modal.desc}</p>}
 
             <div className={styles.qrBox}>
-              <img
-                src={getQrUrl(modal.id, modal.qr_image)}
-                alt={`QR code for ${modal.name}`}
-                className={styles.qrImg}
-              />
+              {modal.qr_image ? (
+                <img
+                  src={modal.qr_image}
+                  alt={`QR code for ${modal.name}`}
+                  className={styles.qrImg}
+                />
+              ) : (
+                <QRCodeSVG
+                  value={ensureProtocol(modal.url)}
+                  size={200}
+                  level="H"
+                  includeMargin={true}
+                  className={styles.qrImg}
+                />
+              )}
             </div>
 
             <div className={styles.urlRow} onClick={() => copyLink(ensureProtocol(modal.url), 'modal')}>
@@ -473,7 +507,8 @@ export default function Directory({ links: initialLinks, announcements: initialA
             <button className={styles.closeBtn} onClick={() => setModal(null)}>Close</button>
           </div>
         </div>
-      )}
+        )
+      })()}
     </div>
   )
 }

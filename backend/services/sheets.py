@@ -1,5 +1,6 @@
 import json
 import gspread
+from functools import lru_cache
 from google.oauth2.service_account import Credentials
 from typing import List, Optional
 from config import get_settings
@@ -17,15 +18,23 @@ SCOPES = [
 ]
 
 
+@lru_cache(maxsize=1)
 def _get_client() -> gspread.Client:
+    """Cached Google Sheets client - reused across requests."""
     creds_dict = json.loads(settings.google_service_account_json)
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
     return gspread.authorize(creds)
 
 
-def _get_worksheet() -> gspread.Worksheet:
+@lru_cache(maxsize=1)
+def _get_spreadsheet():
+    """Cached spreadsheet - reused across requests."""
     client = _get_client()
-    spreadsheet = client.open_by_key(settings.google_sheet_id)
+    return client.open_by_key(settings.google_sheet_id)
+
+
+def _get_worksheet() -> gspread.Worksheet:
+    spreadsheet = _get_spreadsheet()
     try:
         ws = spreadsheet.worksheet(SHEET_NAME)
     except gspread.WorksheetNotFound:
@@ -88,8 +97,7 @@ def delete_row(row_num: int) -> None:
 # ── Announcements ─────────────────────────────────────────────────────────────
 
 def _get_announcements_worksheet() -> gspread.Worksheet:
-    client = _get_client()
-    spreadsheet = client.open_by_key(settings.google_sheet_id)
+    spreadsheet = _get_spreadsheet()
     try:
         ws = spreadsheet.worksheet(ANNOUNCEMENTS_SHEET_NAME)
     except gspread.WorksheetNotFound:
@@ -145,8 +153,7 @@ GIVING_HEADERS = ["id", "label", "account_number", "bank_name", "active"]
 
 
 def _get_giving_worksheet() -> gspread.Worksheet:
-    client = _get_client()
-    spreadsheet = client.open_by_key(settings.google_sheet_id)
+    spreadsheet = _get_spreadsheet()
     try:
         ws = spreadsheet.worksheet(GIVING_SHEET_NAME)
     except gspread.WorksheetNotFound:

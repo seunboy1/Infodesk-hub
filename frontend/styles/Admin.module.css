@@ -334,6 +334,7 @@
 .cat_giving     { background: var(--green-light); color: var(--green); }
 .cat_devotion    { background: var(--rose-light); color: var(--rose); }
 .cat_counselling { background: var(--cyan-light); color: var(--cyan); }
+.cat_discipleship { background: var(--indigo-light); color: var(--indigo); }
 
 .cellUrl { overflow: hidden; }
 .urlText {
