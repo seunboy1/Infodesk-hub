@@ -22,6 +22,7 @@ def verify_token(token: str) -> bool:
         return False
 
 
+
 def require_admin(infodesk_token: Optional[str] = Cookie(default=None)):
     if not infodesk_token or not verify_token(infodesk_token):
         raise HTTPException(status_code=401, detail="Not authenticated")
