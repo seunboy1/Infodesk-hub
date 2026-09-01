@@ -7,6 +7,7 @@ from config import get_settings
 settings = get_settings()
 
 
+
 def create_token() -> str:
     expire = datetime.now(timezone.utc) + timedelta(hours=settings.jwt_expire_hours)
     payload = {"sub": "admin", "exp": expire}
