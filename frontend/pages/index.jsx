@@ -7,26 +7,25 @@ import s from '../styles/Directory.module.css'
 
 // Line icons, drawn on a 24x24 grid
 const ICONS = {
-  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
-  news: '<path d="M4 10v4h3l7 4V6l-7 4H4z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
-  wallet: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M16 14.5h2"/>',
-  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
-  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
-  list: '<path d="M5 7h14M5 12h14M5 17h14"/>',
-  tv: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M10.5 9.8v4.4l3.8-2.2z"/>',
-  map: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
-  connect: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
-  membership: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
-  giving: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
-  devotion: '<path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',
-  books: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
+  link: <><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/></>,
+  news: <><path d="M4 10v4h3l7 4V6l-7 4H4z"/><path d="M17 9a4 4 0 0 1 0 6"/></>,
+  wallet: <><rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M16 14.5h2"/></>,
+  search: <><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></>,
+  grid: <><rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/></>,
+  list: <><path d="M5 7h14M5 12h14M5 17h14"/></>,
+  tv: <><rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M10.5 9.8v4.4l3.8-2.2z"/></>,
+  map: <><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/></>,
+  connect: <><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></>,
+  membership: <><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/></>,
+  giving: <><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></>,
+  devotion: <><path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/></>,
+  books: <><path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/></>,
 }
 // Categories without their own drawing borrow a close one; anything else gets the link icon
 const CAT_ICON = { new_members: 'membership', counselling: 'connect', discipleship: 'books', testimony: 'giving' }
 
 const Icon = ({ name }) => (
-  <svg className={s.icon} viewBox="0 0 24 24" aria-hidden="true"
-    dangerouslySetInnerHTML={{ __html: ICONS[CAT_ICON[name] || name] || ICONS.link }} />
+  <svg className={s.icon} viewBox="0 0 24 24" aria-hidden="true">{ICONS[CAT_ICON[name] || name] || ICONS.link}</svg>
 )
 
 const Logo = () => (
