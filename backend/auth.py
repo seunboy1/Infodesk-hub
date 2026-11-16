@@ -1,6 +1,6 @@
 from datetime import datetime, timedelta, timezone
 from fastapi import HTTPException, Cookie, Depends
-from jose import JWTError, jwt
+import jwt
 from typing import Optional
 from config import get_settings
 
@@ -18,7 +18,7 @@ def verify_token(token: str) -> bool:
     try:
         payload = jwt.decode(token, settings.jwt_secret, algorithms=[settings.jwt_algorithm])
         return payload.get("sub") == "admin"
-    except JWTError:
+    except jwt.PyJWTError:
         return False
 
 
