@@ -1,8 +1,9 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from fastapi.responses import Response
 from services.sheets import get_all_rows, get_all_announcements, get_all_giving_accounts
 from services.qr import generate_qr_bytes
-from models import Link, Announcement, GivingAccount
+from services import ezra
+from models import Link, Announcement, GivingAccount, ChatRequest
 from typing import List
 
 router = APIRouter()
@@ -51,5 +52,17 @@ def get_giving_accounts():
     """Return all active giving accounts for the public directory."""
     try:
         return get_all_giving_accounts(include_hidden=False)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/chat")
+def chat(body: ChatRequest, request: Request):
+    """Ezra: answer a visitor's question from the links, announcements and Q&A sheet."""
+    # Render sits behind a proxy, so the visitor's address is in X-Forwarded-For
+    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
+        request.client.host if request.client else "unknown")
+    try:
+        return ezra.answer(body.question, ip)
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

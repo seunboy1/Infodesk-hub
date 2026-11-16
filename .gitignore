@@ -42,3 +42,6 @@ htmlcov/
 !package.json
 !package-lock.json
 !tsconfig.json
+
+# Design mockups (local only)
+.superpowers/

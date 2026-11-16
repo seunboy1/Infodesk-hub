@@ -16,8 +16,17 @@ class Settings(BaseSettings):
     # Cloudinary (for QR image uploads)
     cloudinary_url: str = ""
 
-    # CORS
+    # CORS (comma-separated to allow more than one site)
     frontend_url: str = "http://localhost:3000"
+
+    # Ezra chat: models are tried in this order; a provider with no key is skipped
+    groq_api_key: str = ""
+    groq_model: str = "openai/gpt-oss-20b"
+    cloudflare_account_id: str = ""
+    cloudflare_api_token: str = ""
+    cloudflare_model: str = "@cf/meta/llama-3.3-70b-instruct-fp8-fast"
+    openrouter_api_key: str = ""
+    openrouter_model: str = "qwen/qwen3.7-flash"
 
     # Security
     secure_cookies: bool = False  # Set True in production (HTTPS)

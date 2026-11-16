@@ -31,6 +31,11 @@ export const getQrUrl = (id, qr_image) =>
   qr_image || `${API}/links/${id}/qr.png`
 export const fetchAnnouncements = () => request('/announcements')
 
+// Ezra chat
+export const askEzra = (question) =>
+  request('/chat', { method: 'POST', body: JSON.stringify({ question }) })
+export const wakeBackend = () => request('/health').catch(() => {})
+
 // Admin auth
 export const login = (password) =>
   request('/admin/login', { method: 'POST', body: JSON.stringify({ password }) })

@@ -1,514 +1,209 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState } from 'react'
 import { QRCodeSVG } from 'qrcode.react'
 import { fetchLinks, fetchAnnouncements, fetchGivingAccounts } from '../lib/api'
 import { ensureProtocol } from '../lib/utils'
-import styles from '../styles/Directory.module.css'
+import Ezra from '../components/Ezra'
+import s from '../styles/Directory.module.css'
 
-const CATS = {
-  membership:   { label: 'Membership',   color: 'teal',   icon: '👥' },
-  new_members:  { label: 'New Members',  color: 'purple', icon: '🌟' },
-  testimony:    { label: 'Testimony',    color: 'coral',  icon: '❤️' },
-  books:        { label: 'Books',        color: 'amber',  icon: '📖' },
-  connect:      { label: 'Connect',      color: 'gold',   icon: '🤝' },
-  map:          { label: 'Map',          color: 'blue',   icon: '📍' },
-  giving:       { label: 'Giving',       color: 'green',  icon: '💝' },
-  devotion:     { label: 'Devotion',     color: 'rose',   icon: '🙏' },
-  counselling:  { label: 'Counselling',  color: 'cyan',   icon: '💬' },
-  discipleship: { label: 'Discipleship', color: 'indigo', icon: '📚' },
+// Line icons, drawn on a 24x24 grid
+const ICONS = {
+  link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  news: '<path d="M4 10v4h3l7 4V6l-7 4H4z"/><path d="M17 9a4 4 0 0 1 0 6"/>',
+  wallet: '<rect x="3" y="6" width="18" height="13" rx="3"/><path d="M3 10h18"/><path d="M16 14.5h2"/>',
+  search: '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>',
+  grid: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+  list: '<path d="M5 7h14M5 12h14M5 17h14"/>',
+  tv: '<rect x="3" y="6" width="18" height="12" rx="2.5"/><path d="M10.5 9.8v4.4l3.8-2.2z"/>',
+  map: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  connect: '<path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/>',
+  membership: '<circle cx="12" cy="8" r="4"/><path d="M4 21c0-4.4 3.6-7 8-7s8 2.6 8 7"/>',
+  giving: '<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.5A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>',
+  devotion: '<path d="M12 3c1 3 5 5 5 10a5 5 0 0 1-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',
+  books: '<path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z"/><path d="M5 17a3 3 0 0 1 3-3h11"/>',
 }
+// Categories without their own drawing borrow a close one; anything else gets the link icon
+const CAT_ICON = { new_members: 'membership', counselling: 'connect', discipleship: 'books', testimony: 'giving' }
 
-// Available colors for custom categories
-const COLORS = ['teal', 'purple', 'coral', 'amber', 'gold', 'blue', 'green', 'rose', 'cyan', 'indigo']
+const Icon = ({ name }) => (
+  <svg className={s.icon} viewBox="0 0 24 24" aria-hidden="true"
+    dangerouslySetInnerHTML={{ __html: ICONS[CAT_ICON[name] || name] || ICONS.link }} />
+)
 
-// Get category info - returns known category or generates consistent styling for custom ones
-function getCatInfo(catKey) {
-  if (CATS[catKey]) return CATS[catKey]
+const Logo = () => (
+  <span className={s.logo}>
+    <svg viewBox="0 0 88 40"><path pathLength="260" d="M8 20C8 6 24 6 32 20S48 34 56 20S80 6 80 20C80 34 64 34 56 20S40 6 32 20S8 34 8 20Z" /></svg>
+  </span>
+)
 
-  // Generate consistent color based on category name
-  let hash = 0
-  for (let i = 0; i < catKey.length; i++) {
-    hash = catKey.charCodeAt(i) + ((hash << 5) - hash)
-  }
-  const colorIndex = Math.abs(hash) % COLORS.length
+const catLabel = cat => cat.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
 
-  // Format label: replace underscores with spaces and capitalize
-  const label = catKey.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
+const SLIDES = [
+  { icon: 'devotion', tag: 'Daily prayer', title: 'Triumph30', text: 'Pray with us daily · 6am, 12pm, 8pm', cta: 'Join', url: 'https://www.youtube.com/@t30devotion' },
+  { icon: 'tv', tag: 'CCI Global', title: 'Watch live sermons', text: 'Celebration Global TV on YouTube', cta: 'Watch', url: 'https://www.youtube.com/@CelebrationGlobalTV' },
+]
+const VIEWS = [['links', 'link', 'Links'], ['announcements', 'news', 'Announcements'], ['giving', 'wallet', 'Giving']]
 
-  return { label, color: COLORS[colorIndex], icon: '📌' }
-}
-
-
-export default function Directory({ links: initialLinks, announcements: initialAnnouncements, givingAccounts: initialGivingAccounts }) {
-  const [links, setLinks] = useState(initialLinks || [])
+export default function Directory({ links = [], announcements = [], givingAccounts = [] }) {
+  const [view, setView] = useState('links')
   const [q, setQ] = useState('')
-  const [activeTab, setActiveTab] = useState('all')
+  const [cat, setCat] = useState('all')
+  const [listMode, setListMode] = useState(false)
   const [modal, setModal] = useState(null)
   const [copied, setCopied] = useState(null)
-  const inputRef = useRef()
 
-  // Announcements
-  const [announcements, setAnnouncements] = useState(initialAnnouncements || [])
-  const [expandedAnn, setExpandedAnn] = useState({})
+  const cats = [...new Set(links.map(l => l.cat))]
+  const needle = q.toLowerCase()
+  const filtered = links.filter(l =>
+    (cat === 'all' || l.cat === cat) &&
+    (!q || `${l.name} ${l.desc} ${catLabel(l.cat)}`.toLowerCase().includes(needle))
+  )
 
-  // Giving accounts
-  const [givingAccounts, setGivingAccounts] = useState(initialGivingAccounts || [])
-
-  // View toggle: 'links', 'announcements', or 'giving'
-  const [activeView, setActiveView] = useState('links')
-
-  // Sidebar collapsed state
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
-
-  // View mode: 'grid' or 'list'
-  const [viewMode, setViewMode] = useState('grid')
-
-  // Helper to detect announcement type from title
-  function getAnnType(title) {
-    const t = title.toLowerCase()
-    if (t.includes('service') || t.includes('worship')) return { icon: '⛪', color: 'teal', label: 'Service' }
-    if (t.includes('prayer') || t.includes('triumph')) return { icon: '🙏', color: 'rose', label: 'Prayer' }
-    if (t.includes('meeting') || t.includes('fellowship')) return { icon: '🤝', color: 'gold', label: 'Fellowship' }
-    if (t.includes('event') || t.includes('program')) return { icon: '📅', color: 'purple', label: 'Event' }
-    if (t.includes('urgent') || t.includes('important')) return { icon: '🔔', color: 'coral', label: 'Important' }
-    return { icon: '📢', color: 'blue', label: 'Notice' }
-  }
-
-  function toggleExpand(id) {
-    setExpandedAnn(prev => ({ ...prev, [id]: !prev[id] }))
-  }
-
-  const filtered = links.filter(l => {
-    const matchTab = activeTab === 'all' || l.cat === activeTab
-    const matchQ = !q || l.name.toLowerCase().includes(q.toLowerCase()) ||
-      l.desc.toLowerCase().includes(q.toLowerCase()) ||
-      CATS[l.cat]?.label.toLowerCase().includes(q.toLowerCase())
-    return matchTab && matchQ
-  })
-
-  function copyLink(url, id = 'link') {
-    navigator.clipboard.writeText(url).then(() => {
+  function copy(text, id) {
+    navigator.clipboard.writeText(text).then(() => {
       setCopied(id)
       setTimeout(() => setCopied(null), 2000)
     })
   }
 
   return (
-    <div className={styles.dashLayout}>
-      {/* Sidebar */}
-      <aside className={`${styles.dashSidebar} ${sidebarCollapsed ? styles.dashSidebarCollapsed : ''}`}>
-        <button
-          className={`${styles.sidebarToggle} ${sidebarCollapsed ? styles.sidebarToggleCollapsed : ''}`}
-          onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
-          aria-label={sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          ‹
-        </button>
-        <div className={`${styles.dashBrand} ${sidebarCollapsed ? styles.dashBrandCollapsed : ''}`}>
-          <span className={styles.dashLogo}>CCI Ajah Info Desk</span>
-          <span className={styles.dashLogoAccent}>{sidebarCollapsed ? 'Hub' : 'Hub'}</span>
-        </div>
+    <div className={s.page}>
+      <div className={s.loader} aria-hidden="true"><Logo />Ajah Info Desk</div>
+      <i className={s.blob} />
+      <div className={s.wrap}>
+        <header className={s.header}>
+          <Logo />Ajah Info Desk
+          <nav className={s.nav}>
+            {VIEWS.map(([key, icon, label]) => (
+              <button key={key} className={view === key ? s.navOn : ''} onClick={() => setView(key)}>
+                <Icon name={icon} />{label}
+              </button>
+            ))}
+          </nav>
+        </header>
 
-        <nav className={`${styles.dashNav} ${sidebarCollapsed ? styles.dashNavCollapsed : ''}`}>
-          <button
-            className={`${styles.dashNavItem} ${activeView === 'links' ? styles.dashNavActive : ''}`}
-            onClick={() => setActiveView('links')}
-          >
-            <span className={styles.dashNavIcon}>📋</span>
-            <span>Links</span>
-            <span className={styles.dashNavBadge}>{links.length}</span>
-          </button>
-          <button
-            className={`${styles.dashNavItem} ${activeView === 'announcements' ? styles.dashNavActive : ''}`}
-            onClick={() => setActiveView('announcements')}
-          >
-            <span className={styles.dashNavIcon}>📢</span>
-            <span>Announcements</span>
-            {announcements.length > 0 && (
-              <span className={styles.dashNavBadge}>{announcements.length}</span>
-            )}
-          </button>
-          <button
-            className={`${styles.dashNavItem} ${activeView === 'giving' ? styles.dashNavActive : ''}`}
-            onClick={() => setActiveView('giving')}
-          >
-            <span className={styles.dashNavIcon}>🏦</span>
-            <span>Account Numbers</span>
-          </button>
-        </nav>
-
-        <div className={`${styles.dashSidebarFooter} ${sidebarCollapsed ? styles.dashFooterCollapsed : ''}`}>
-          <a href="/admin" className={styles.dashAdminLink}>
-            <span className={styles.dashAdminIcon}>⚙️</span>
-            <span>Admin Panel</span>
-            <span className={styles.dashAdminArrow}>→</span>
-          </a>
-        </div>
-      </aside>
-
-      {/* Main Content */}
-      <div className={`${styles.dashContent} ${sidebarCollapsed ? styles.dashContentCollapsed : ''}`}>
-        {activeView === 'giving' ? (
+        {view === 'links' && (
           <>
-            {/* Account Numbers View */}
-            <header className={styles.contentHeader}>
-              <h1 className={styles.contentTitle}>Account Numbers</h1>
-              <p className={styles.contentSubtitle}>Bank account details for offerings and payments</p>
-            </header>
-
-            <main className={styles.main}>
-              {/* Mobile count - below header */}
-              <div className={styles.mobileHeaderSpacer}>
-                <span className={styles.mobileCount}>{givingAccounts.length} accounts</span>
-              </div>
-              {givingAccounts.length === 0 ? (
-                <div className={styles.empty}>
-                  <span>💝</span>
-                  <p>No giving accounts configured</p>
-                </div>
-              ) : (
-                <div className={styles.givingCards}>
-                  {givingAccounts.map(account => (
-                    <div key={account.id} className={styles.givingCard}>
-                      <div className={styles.givingBank}>
-                        <span className={styles.givingBankLogo}>🏦</span>
-                        <span className={styles.givingBankName}>{account.bank_name}</span>
-                      </div>
-                      <div className={styles.givingAccount}>
-                        <span className={styles.givingLabel}>{account.label}</span>
-                        <span className={styles.givingNumber}>{account.account_number}</span>
-                        <button
-                          className={styles.givingCopy}
-                          onClick={() => copyLink(account.account_number, account.id)}
-                        >
-                          {copied === account.id ? '✓' : 'Copy'}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </main>
-          </>
-        ) : activeView === 'links' ? (
-          <>
-            {/* Links Header */}
-            <header className={styles.contentHeader}>
-              <h1 className={styles.contentTitle}>Links & Resources</h1>
-              <p className={styles.contentSubtitle}>Find any link or QR code instantly</p>
-
-              {/* Desktop: Search bar */}
-              <div className={styles.desktopSearchWrap}>
-                <span className={styles.searchIcon}>⌕</span>
-                <input
-                  className={styles.search}
-                  type="text"
-                  placeholder="Search forms, books, membership…"
-                  value={q}
-                  onChange={e => setQ(e.target.value)}
-                />
-                {q && <button className={styles.clear} onClick={() => setQ('')}>✕</button>}
-              </div>
-
-              {/* Desktop: Category tabs */}
-              <div className={styles.tabs}>
-                <button
-                  className={`${styles.tab} ${activeTab === 'all' ? styles.tabActive : ''}`}
-                  onClick={() => setActiveTab('all')}
-                >All</button>
-                {Object.entries(CATS).map(([key, c]) => (
-                  <button
-                    key={key}
-                    className={`${styles.tab} ${activeTab === key ? styles.tabActive : ''}`}
-                    onClick={() => setActiveTab(key)}
-                  >
-                    {c.icon} {c.label}
-                  </button>
+            <div className={s.feat}>
+              <div className={s.track}>
+                {/* the third slide repeats the first so the loop never rewinds */}
+                {[...SLIDES, SLIDES[0]].map((sl, i) => (
+                  <a key={i} className={s.slide} href={sl.url} target="_blank" rel="noopener noreferrer"
+                    aria-hidden={i === SLIDES.length} tabIndex={i === SLIDES.length ? -1 : 0}>
+                    <span className={s.slideIcon}><Icon name={sl.icon} /></span>
+                    <div><small>{sl.tag}</small><b>{sl.title}</b><p>{sl.text}</p></div>
+                    <span className={s.cta}>▶ {sl.cta}</span>
+                  </a>
                 ))}
               </div>
-            </header>
+              <div className={s.dots}><i /><i /></div>
+            </div>
 
-            {/* Links Grid */}
-            <main className={styles.main}>
-              {/* Mobile: Search bar on top, filters below */}
-              <div className={styles.mobileSearchRow}>
-                <div className={styles.searchWrap}>
-                  <span className={styles.searchIcon}>⌕</span>
-                  <input
-                    ref={inputRef}
-                    className={styles.search}
-                    type="text"
-                    placeholder="Search..."
-                    value={q}
-                    onChange={e => setQ(e.target.value)}
-                  />
-                  {q && <button className={styles.clear} onClick={() => setQ('')}>✕</button>}
-                </div>
-                <div className={styles.mobileFilterRow}>
-                  <select
-                    className={styles.catSelect}
-                    value={activeTab}
-                    onChange={e => setActiveTab(e.target.value)}
-                  >
-                    <option value="all">All Categories</option>
-                    {Object.entries(CATS).map(([key, c]) => (
-                      <option key={key} value={key}>{c.icon} {c.label}</option>
-                    ))}
-                  </select>
-                  <div className={styles.mobileViewToggle}>
-                    <button
-                      className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                      onClick={() => setViewMode('grid')}
-                      aria-label="Grid view"
-                    >
-                      <svg className={styles.viewIcon} viewBox="0 0 16 16" fill="currentColor">
-                        <rect x="1" y="1" width="6" height="6" rx="1" />
-                        <rect x="9" y="1" width="6" height="6" rx="1" />
-                        <rect x="1" y="9" width="6" height="6" rx="1" />
-                        <rect x="9" y="9" width="6" height="6" rx="1" />
-                      </svg>
-                    </button>
-                    <button
-                      className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                      onClick={() => setViewMode('list')}
-                      aria-label="List view"
-                    >
-                      <svg className={styles.viewIcon} viewBox="0 0 16 16" fill="currentColor">
-                        <rect x="1" y="1" width="14" height="3" rx="1" />
-                        <rect x="1" y="6" width="14" height="3" rx="1" />
-                        <rect x="1" y="11" width="14" height="3" rx="1" />
-                      </svg>
-                    </button>
+            {announcements.length > 0 && (
+              <div className={s.annBar}>
+                <div className={s.annLabel}><Icon name="news" /><span>Announcements</span></div>
+                <div className={s.annWin}>
+                  <div className={s.annMove}>
+                    {/* shown twice so the moving text loops without a gap */}
+                    {[0, 1].map(n => announcements.map(a => (
+                      <span key={`${n}-${a.id}`} aria-hidden={n === 1}><b>{a.title}</b><span>{a.message}</span></span>
+                    )))}
                   </div>
                 </div>
+                <button className={s.annAll} onClick={() => setView('announcements')}>See all {announcements.length}</button>
               </div>
+            )}
 
-              <div className={styles.viewControls}>
-                    <p className={styles.resultCount}>
-                      {filtered.length === links.length
-                        ? `${links.length} resources`
-                        : `${filtered.length} of ${links.length} resources`}
-                    </p>
-                    <div className={styles.viewToggle}>
-                      <button
-                        className={`${styles.viewBtn} ${viewMode === 'grid' ? styles.viewBtnActive : ''}`}
-                        onClick={() => setViewMode('grid')}
-                        aria-label="Grid view"
-                      >
-                        <svg className={styles.viewIcon} viewBox="0 0 16 16" fill="currentColor">
-                          <rect x="1" y="1" width="6" height="6" rx="1" />
-                          <rect x="9" y="1" width="6" height="6" rx="1" />
-                          <rect x="1" y="9" width="6" height="6" rx="1" />
-                          <rect x="9" y="9" width="6" height="6" rx="1" />
-                        </svg>
-                      </button>
-                      <button
-                        className={`${styles.viewBtn} ${viewMode === 'list' ? styles.viewBtnActive : ''}`}
-                        onClick={() => setViewMode('list')}
-                        aria-label="List view"
-                      >
-                        <svg className={styles.viewIcon} viewBox="0 0 16 16" fill="currentColor">
-                          <rect x="1" y="1" width="14" height="3" rx="1" />
-                          <rect x="1" y="6" width="14" height="3" rx="1" />
-                          <rect x="1" y="11" width="14" height="3" rx="1" />
-                        </svg>
-                      </button>
-                    </div>
+            <div className={s.sec}><Icon name="link" />Links</div>
+            <div className={s.controls}>
+              <label className={s.search}>
+                <Icon name="search" />
+                <input type="search" placeholder="Search…" aria-label="Search links" value={q} onChange={e => setQ(e.target.value)} />
+              </label>
+              <select className={s.select} aria-label="Category" value={cat} onChange={e => setCat(e.target.value)}>
+                <option value="all">All Categories</option>
+                {cats.map(c => <option key={c} value={c}>{catLabel(c)}</option>)}
+              </select>
+              <div className={s.toggle}>
+                <button className={listMode ? '' : s.toggleOn} aria-label="Grid view" onClick={() => setListMode(false)}><Icon name="grid" /></button>
+                <button className={listMode ? s.toggleOn : ''} aria-label="List view" onClick={() => setListMode(true)}><Icon name="list" /></button>
+              </div>
+            </div>
+
+            {filtered.length === 0 && <p className={s.empty}>Nothing found. Try a different search.</p>}
+            <div className={`${s.grid} ${listMode ? s.list : ''}`}>
+              {filtered.map(link => (
+                <a key={link.id} className={s.tile} href={ensureProtocol(link.url)} target="_blank" rel="noopener noreferrer">
+                  <div className={s.tileHead}>
+                    <span className={s.tileIcon}><Icon name={link.cat} /></span>
+                    <span>{catLabel(link.cat)}</span>
                   </div>
-
-                  {filtered.length === 0 && (
-                    <div className={styles.empty}>
-                      <span>🔍</span>
-                      <p>Nothing found — try a different search</p>
-                    </div>
-                  )}
-
-                  {viewMode === 'grid' ? (
-                    <div className={styles.grid}>
-                      {filtered.map(link => {
-                        const cat = getCatInfo(link.cat)
-                        return (
-                          <a
-                            key={link.id}
-                            href={ensureProtocol(link.url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={`${styles.card} ${styles[`card_${cat.color}`]}`}
-                          >
-                            <div className={styles.cardTop}>
-                              <span className={`${styles.catTag} ${styles[`tag_${cat.color}`]}`}>
-                                {cat.icon} {cat.label}
-                              </span>
-                            </div>
-                            <h3 className={styles.cardName}>{link.name}</h3>
-                            {link.desc && <p className={styles.cardDesc}>{link.desc}</p>}
-                            <div className={styles.cardActions}>
-                              <button
-                                className={`${styles.btn} ${styles.btnPrimary}`}
-                                onClick={(e) => { e.preventDefault(); setModal(link); }}
-                              >
-                                QR Code
-                              </button>
-                              <button
-                                className={styles.btn}
-                                onClick={(e) => { e.preventDefault(); copyLink(ensureProtocol(link.url), link.id); }}
-                              >
-                                {copied === link.id ? '✓ Copied' : 'Copy Link'}
-                              </button>
-                            </div>
-                          </a>
-                        )
-                      })}
-                    </div>
-                  ) : (
-                    <div className={styles.list}>
-                      {filtered.map(link => {
-                        const cat = getCatInfo(link.cat)
-                        return (
-                          <a
-                            key={link.id}
-                            href={ensureProtocol(link.url)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className={styles.listCard}
-                          >
-                            <div className={styles.listCardContent}>
-                              <div className={styles.listCardTop}>
-                                <span className={`${styles.catTag} ${styles[`tag_${cat.color}`]}`}>
-                                  {cat.icon} {cat.label}
-                                </span>
-                                <h3 className={styles.listCardName}>{link.name}</h3>
-                              </div>
-                              {link.desc && <p className={styles.listCardDesc}>{link.desc}</p>}
-                            </div>
-                            <div className={styles.listCardActions}>
-                              <button
-                                className={`${styles.btn} ${styles.btnPrimary}`}
-                                onClick={(e) => { e.preventDefault(); setModal(link); }}
-                              >
-                                QR
-                              </button>
-                              <button
-                                className={styles.btn}
-                                onClick={(e) => { e.preventDefault(); copyLink(ensureProtocol(link.url), link.id); }}
-                              >
-                                {copied === link.id ? '✓' : 'Copy'}
-                              </button>
-                            </div>
-                          </a>
-                        )
-                      })}
-                    </div>
-                  )}
-            </main>
-          </>
-        ) : (
-          <>
-            {/* Announcements View */}
-            <header className={styles.contentHeader}>
-              <h1 className={styles.contentTitle}>Announcements</h1>
-              <p className={styles.contentSubtitle}>Stay updated with the latest news</p>
-            </header>
-
-            <main className={styles.main}>
-              {/* Mobile count - below header */}
-              <div className={styles.mobileHeaderSpacer}>
-                <span className={styles.mobileCount}>{announcements.length} announcements</span>
-              </div>
-              {announcements.length === 0 ? (
-                <div className={styles.empty}>
-                  <span>📢</span>
-                  <p>No announcements at this time</p>
-                </div>
-              ) : (
-                <div className={styles.annTimeline}>
-                  {announcements.map((ann, idx) => {
-                    const type = getAnnType(ann.title)
-                    const isLong = ann.message.length > 150
-                    const isExpanded = expandedAnn[ann.id]
-                    return (
-                      <div key={ann.id} className={styles.annItem}>
-                        <div className={`${styles.annAccent} ${styles[`accent_${type.color}`]}`} />
-                        <div className={styles.annContent}>
-                          <div className={styles.annHeader}>
-                            <span className={`${styles.annIcon} ${styles[`tag_${type.color}`]}`}>
-                              {type.icon}
-                            </span>
-                            <span className={`${styles.annTypeBadge} ${styles[`tag_${type.color}`]}`}>
-                              {type.label}
-                            </span>
-                          </div>
-                          <h3 className={styles.annTitle}>{ann.title}</h3>
-                          <p className={`${styles.annMessage} ${!isExpanded && isLong ? styles.annTruncated : ''}`}>
-                            {ann.message}
-                          </p>
-                          {isLong && (
-                            <button
-                              className={styles.annExpandBtn}
-                              onClick={() => toggleExpand(ann.id)}
-                            >
-                              {isExpanded ? 'Show less' : 'Read more'}
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    )
-                  })}
-                </div>
-              )}
-            </main>
+                  <h3>{link.name}</h3>
+                  {link.desc && <p>{link.desc}</p>}
+                  <div className={s.actions}>
+                    <button className={`${s.btn} ${s.btnMain}`} onClick={e => { e.preventDefault(); setModal(link) }}>QR Code</button>
+                    <button className={s.btn} onClick={e => { e.preventDefault(); copy(ensureProtocol(link.url), link.id) }}>
+                      {copied === link.id ? '✓ Copied' : 'Copy Link'}
+                    </button>
+                  </div>
+                </a>
+              ))}
+            </div>
           </>
         )}
 
-        <footer className={styles.footer}>
-          CCI Info Desk Hub
-        </footer>
+        {view === 'announcements' && (
+          <>
+            <div className={s.sec}><Icon name="news" />Announcements</div>
+            {announcements.length === 0 && <p className={s.empty}>No announcements at this time.</p>}
+            <div className={s.cards}>
+              {announcements.map(a => (
+                <div key={a.id} className={s.card}><h3>{a.title}</h3><p>{a.message}</p></div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {view === 'giving' && (
+          <>
+            <div className={s.sec}><Icon name="wallet" />Account numbers</div>
+            {givingAccounts.length === 0 && <p className={s.empty}>No giving accounts yet.</p>}
+            <div className={s.cards}>
+              {givingAccounts.map(a => (
+                <div key={a.id} className={s.card}>
+                  <small>{a.bank_name}</small>
+                  <h3>{a.label}</h3>
+                  <div className={s.acct}>
+                    {a.account_number}
+                    <button className={s.btn} onClick={() => copy(a.account_number, a.id)}>{copied === a.id ? '✓ Copied' : 'Copy'}</button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        <footer className={s.footer}>CCI Ajah Info Desk · <a href="/admin">Admin</a></footer>
       </div>
 
-      {/* QR Modal */}
-      {modal && (() => {
-        const modalCat = getCatInfo(modal.cat)
-        return (
-        <div className={styles.overlay} onClick={e => e.target === e.currentTarget && setModal(null)}>
-          <div className={styles.modal}>
-            <div className={styles.modalHeader}>
-              <span className={`${styles.modalIcon} ${styles[`tag_${modalCat.color}`]}`}>
-                {modalCat.icon}
-              </span>
-              <h2 className={styles.modalTitle}>{modal.name}</h2>
+      {modal && (
+        <div className={s.overlay} onClick={e => e.target === e.currentTarget && setModal(null)}>
+          <div className={s.modal} role="dialog" aria-label={`QR code for ${modal.name}`}>
+            <h2>{modal.name}</h2>
+            {modal.desc && <p>{modal.desc}</p>}
+            {modal.qr_image
+              ? <img className={s.qr} src={modal.qr_image} alt={`QR code for ${modal.name}`} />
+              : <QRCodeSVG className={s.qr} value={ensureProtocol(modal.url)} size={200} level="H" />}
+            <p className={s.url}>{ensureProtocol(modal.url)}</p>
+            <div className={s.actions}>
+              <a className={`${s.btn} ${s.btnMain}`} href={ensureProtocol(modal.url)} target="_blank" rel="noopener noreferrer">Open Link ↗</a>
+              <button className={s.btn} onClick={() => copy(ensureProtocol(modal.url), 'modal')}>{copied === 'modal' ? '✓ Copied' : 'Copy'}</button>
             </div>
-            {modal.desc && <p className={styles.modalDesc}>{modal.desc}</p>}
-
-            <div className={styles.qrBox}>
-              {modal.qr_image ? (
-                <img
-                  src={modal.qr_image}
-                  alt={`QR code for ${modal.name}`}
-                  className={styles.qrImg}
-                />
-              ) : (
-                <QRCodeSVG
-                  value={ensureProtocol(modal.url)}
-                  size={200}
-                  level="H"
-                  includeMargin={true}
-                  className={styles.qrImg}
-                />
-              )}
-            </div>
-
-            <div className={styles.urlRow} onClick={() => copyLink(ensureProtocol(modal.url), 'modal')}>
-              <span className={styles.urlText}>{ensureProtocol(modal.url)}</span>
-              <span className={styles.copyHint}>{copied === 'modal' ? '✓ Copied!' : 'Copy'}</span>
-            </div>
-
-            <a href={ensureProtocol(modal.url)} target="_blank" rel="noopener noreferrer" className={styles.openBtn}>
-              Open Link ↗
-            </a>
-            <button className={styles.closeBtn} onClick={() => setModal(null)}>Close</button>
+            <button className={s.btn} onClick={() => setModal(null)}>Close</button>
           </div>
         </div>
-        )
-      })()}
+      )}
+
+      <Ezra />
     </div>
   )
 }

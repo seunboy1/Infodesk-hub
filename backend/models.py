@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from typing import Optional
 
 
@@ -94,3 +94,9 @@ class GivingAccount(GivingAccountBase):
 class AdminGivingAccount(GivingAccount):
     """Giving account with row number for admin operations."""
     row_num: int
+
+
+# ── Ezra chat ────────────────────────────────────────────────────────────────
+
+class ChatRequest(BaseModel):
+    question: str = Field(min_length=1, max_length=500)

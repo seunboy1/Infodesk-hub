@@ -126,6 +126,19 @@ npm run dev
 4. Deploy
 5. Go back to Render and update `FRONTEND_URL` to your Vercel URL
 
+### Ezra chat helper
+
+Ezra answers link questions by matching against the Links sheet, and other questions from the
+`Ezra Q&A` sheet tab (only rows whose `status` is `Confirmed` or `Already on site`).
+To let Ezra use AI models, add any of these to the backend environment. They are tried in this
+order, and a provider with no key is skipped:
+
+- `GROQ_API_KEY` (optional `GROQ_MODEL`)
+- `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` (optional `CLOUDFLARE_MODEL`)
+- `OPENROUTER_API_KEY` (optional `OPENROUTER_MODEL`, default `qwen/qwen3.7-flash`)
+
+With no keys set, Ezra still works by matching. `FRONTEND_URL` may list several sites, separated by commas.
+
 ---
 
 ## Using the app

@@ -202,3 +202,22 @@ def update_giving_account(row_num: int, data: dict) -> None:
 def delete_giving_account(row_num: int) -> None:
     ws = _get_giving_worksheet()
     ws.delete_rows(row_num)
+
+
+# ── Ezra Q&A ─────────────────────────────────────────────────────────────────
+
+QA_SHEET_NAME = "Ezra Q&A"
+QA_USABLE = {"confirmed", "already on site"}
+
+
+def get_qa() -> List[dict]:
+    """Q&A rows Ezra may answer from: only rows someone has confirmed."""
+    try:
+        records = _get_spreadsheet().worksheet(QA_SHEET_NAME).get_all_records()
+    except gspread.WorksheetNotFound:
+        return []
+    return [
+        {"question": str(r.get("question", "")), "answer": str(r.get("answer", ""))}
+        for r in records
+        if str(r.get("status", "")).strip().lower() in QA_USABLE and str(r.get("answer", "")).strip()
+    ]
