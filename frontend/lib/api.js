@@ -1,17 +1,5 @@
 const API = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
 
-// Helper to trigger on-demand revalidation
-async function triggerRevalidation() {
-  try {
-    const secret = process.env.NEXT_PUBLIC_REVALIDATE_SECRET
-    if (!secret) return // Skip if no secret configured
-
-    await fetch(`/api/revalidate?secret=${secret}`)
-  } catch (error) {
-    console.error('Failed to trigger revalidation:', error)
-  }
-}
-
 async function request(path, options = {}) {
   const res = await fetch(`${API}${path}`, {
     credentials: 'include',
@@ -27,8 +15,6 @@ async function request(path, options = {}) {
 
 // Public
 export const fetchLinks = () => request('/links')
-export const getQrUrl = (id, qr_image) =>
-  qr_image || `${API}/links/${id}/qr.png`
 export const fetchAnnouncements = () => request('/announcements')
 
 // Ezra chat
@@ -55,7 +41,6 @@ export const adminFetchLinks = () => request('/admin/links')
 
 export const createLink = async (data) => {
   const result = await request('/admin/links', { method: 'POST', body: JSON.stringify(data) })
-  await triggerRevalidation()
   return result
 }
 
@@ -64,13 +49,11 @@ export const updateLink = async (id, rowNum, data) => {
     method: 'PUT',
     body: JSON.stringify(data),
   })
-  await triggerRevalidation()
   return result
 }
 
 export const deleteLink = async (id, rowNum) => {
   const result = await request(`/admin/links/${id}?row_num=${rowNum}`, { method: 'DELETE' })
-  await triggerRevalidation()
   return result
 }
 
@@ -81,7 +64,11 @@ export const uploadQr = (id, rowNum, file) => {
     method: 'POST',
     credentials: 'include',
     body: fd,
-  }).then(r => r.json())
+  }).then(async r => {
+    const body = await r.json().catch(() => ({}))
+    if (!r.ok) throw new Error(body.detail || 'Upload failed')
+    return body
+  })
 }
 
 export const removeCustomQr = (id, rowNum) =>
@@ -92,7 +79,6 @@ export const adminFetchAnnouncements = () => request('/admin/announcements')
 
 export const createAnnouncement = async (data) => {
   const result = await request('/admin/announcements', { method: 'POST', body: JSON.stringify(data) })
-  await triggerRevalidation()
   return result
 }
 
@@ -101,13 +87,11 @@ export const updateAnnouncement = async (id, rowNum, data) => {
     method: 'PUT',
     body: JSON.stringify(data),
   })
-  await triggerRevalidation()
   return result
 }
 
 export const deleteAnnouncement = async (id, rowNum) => {
   const result = await request(`/admin/announcements/${id}?row_num=${rowNum}`, { method: 'DELETE' })
-  await triggerRevalidation()
   return result
 }
 
@@ -119,7 +103,6 @@ export const adminFetchGivingAccounts = () => request('/admin/giving')
 
 export const createGivingAccount = async (data) => {
   const result = await request('/admin/giving', { method: 'POST', body: JSON.stringify(data) })
-  await triggerRevalidation()
   return result
 }
 
@@ -128,13 +111,11 @@ export const updateGivingAccount = async (id, rowNum, data) => {
     method: 'PUT',
     body: JSON.stringify(data),
   })
-  await triggerRevalidation()
   return result
 }
 
 export const deleteGivingAccount = async (id, rowNum) => {
   const result = await request(`/admin/giving/${id}?row_num=${rowNum}`, { method: 'DELETE' })
-  await triggerRevalidation()
   return result
 }
 

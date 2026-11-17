@@ -35,10 +35,6 @@ class LoginRequest(BaseModel):
     password: str
 
 
-class TokenResponse(BaseModel):
-    ok: bool
-
-
 # ── Announcements ─────────────────────────────────────────────────────────────
 
 class AnnouncementBase(BaseModel):

@@ -1,4 +1,5 @@
 import json
+import time
 import gspread
 from functools import lru_cache
 from google.oauth2.service_account import Credentials
@@ -70,18 +71,12 @@ def add_row(link_id: str, name: str, desc: str, cat: str, url: str) -> None:
 
 def update_row(row_num: int, data: dict) -> None:
     ws = _get_worksheet()
-    ws.update(
-        f"A{row_num}:G{row_num}",
-        [[
-            data["id"],
-            data["name"],
-            data["desc"],
-            data["cat"],
-            data["url"],
-            data.get("qr_image") or "",
-            "true" if data.get("active", True) else "false",
-        ]]
-    )
+    # column F (the uploaded QR image) is left alone, so an edit never wipes it
+    ws.batch_update([
+        {"range": f"A{row_num}:E{row_num}",
+         "values": [[data["id"], data["name"], data["desc"], data["cat"], data["url"]]]},
+        {"range": f"G{row_num}", "values": [["true" if data.get("active", True) else "false"]]},
+    ])
 
 
 def update_qr_image(row_num: int, qr_url: str) -> None:
@@ -92,6 +87,11 @@ def update_qr_image(row_num: int, qr_url: str) -> None:
 def delete_row(row_num: int) -> None:
     ws = _get_worksheet()
     ws.delete_rows(row_num)
+
+
+def row_has_id(sheet_name: str, row_num: int, item_id: str) -> bool:
+    """True if that row still holds that item; rows shift when someone else adds or deletes one."""
+    return str(_get_spreadsheet().worksheet(sheet_name).cell(row_num, 1).value) == item_id
 
 
 # ── Announcements ─────────────────────────────────────────────────────────────
@@ -231,17 +231,29 @@ ORDERS_SHEET_NAME = "Book Orders"
 ORDERS_HEADERS = ["ref", "time", "name", "phone", "email", "items", "books_total", "charge", "total", "status"]
 
 
+_worksheets = {}  # looked up once: every lookup is a call against Google's per-minute limit
+_books = {"at": 0.0, "rows": None}
+
+
 def _bookstore_worksheet(name: str, headers: List[str]) -> gspread.Worksheet:
-    spreadsheet = _get_spreadsheet()
-    try:
-        ws = spreadsheet.worksheet(name)
-    except gspread.WorksheetNotFound:
-        ws = spreadsheet.add_worksheet(title=name, rows=1000, cols=len(headers))
-        ws.append_row(headers)
-    return ws
+    if name not in _worksheets:
+        spreadsheet = _get_spreadsheet()
+        try:
+            _worksheets[name] = spreadsheet.worksheet(name)
+        except gspread.WorksheetNotFound:
+            _worksheets[name] = spreadsheet.add_worksheet(title=name, rows=1000, cols=len(headers))
+            _worksheets[name].append_row(headers)
+    return _worksheets[name]
 
 
 def get_books() -> List[dict]:
+    """The books on sale. Kept for 15 seconds, and dropped at once when a sale changes the stock."""
+    if _books["rows"] is None or time.time() - _books["at"] > 15:
+        _books.update(at=time.time(), rows=_read_books())
+    return _books["rows"]
+
+
+def _read_books() -> List[dict]:
     ws = _bookstore_worksheet(BOOKS_SHEET_NAME, BOOKS_HEADERS)
     records = ws.get_all_records(expected_headers=BOOKS_HEADERS)
     result = []
@@ -262,12 +274,6 @@ def get_books() -> List[dict]:
     return result
 
 
-def take_stock(row_num: int, qty: int) -> None:
-    ws = _bookstore_worksheet(BOOKS_SHEET_NAME, BOOKS_HEADERS)
-    left = int(ws.cell(row_num, 5).value or 0)  # column E = stock
-    ws.update_cell(row_num, 5, max(0, left - qty))
-
-
 def add_order(order: dict) -> None:
     ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
     ws.append_row([order[h] for h in ORDERS_HEADERS])
@@ -281,13 +287,19 @@ def get_order(ref: str) -> Optional[dict]:
     return {**dict(zip(ORDERS_HEADERS, ws.row_values(cell.row))), "row_num": cell.row}
 
 
-def set_order_paid(row_num: int, charge: int, total: int) -> None:
-    ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
-    ws.update(range_name=f"H{row_num}:J{row_num}", values=[[charge, total, "paid"]])  # charge, total, status
+def mark_paid(row_num: int, charge: int, total: int, status: str, stock: dict) -> None:
+    """Write the paid order and the new stock in one request, so one can't be saved without the other.
+
+    stock maps a Books row number to the copies left.
+    """
+    data = [{"range": f"'{ORDERS_SHEET_NAME}'!H{row_num}:J{row_num}", "values": [[charge, total, status]]}]
+    data += [{"range": f"'{BOOKS_SHEET_NAME}'!E{r}", "values": [[left]]} for r, left in stock.items()]  # column E = stock
+    _get_spreadsheet().values_batch_update({"valueInputOption": "RAW", "data": data})
+    _books["rows"] = None
 
 
 def get_paid_orders() -> List[dict]:
     """Paid orders for the admin book desk, newest first."""
     ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
     rows = ws.get_all_records(expected_headers=ORDERS_HEADERS)
-    return [r for r in reversed(rows) if r.get("status") == "paid"]
+    return [r for r in reversed(rows) if str(r.get("status", "")).startswith("paid")]

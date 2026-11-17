@@ -13,8 +13,10 @@ from services.sheets import (
     get_all_rows, add_row, update_row, update_qr_image, delete_row,
     get_all_announcements, add_announcement, update_announcement, delete_announcement,
     get_all_giving_accounts, add_giving_account, update_giving_account, delete_giving_account,
-    get_paid_orders
+    get_paid_orders, row_has_id,
+    SHEET_NAME, ANNOUNCEMENTS_SHEET_NAME, GIVING_SHEET_NAME
 )
+from services.bookstore import parse_items
 from services.qr import upload_custom_qr
 from auth import create_token, require_admin
 from config import get_settings
@@ -31,13 +33,26 @@ MAX_ATTEMPTS = 5
 WINDOW_SECONDS = 60
 
 
+def client_ip(request: Request) -> str:
+    """The visitor's address, for rate limits."""
+    # Render sits behind Cloudflare, which sets this header itself, so a caller can't fake it
+    real = request.headers.get("cf-connecting-ip")
+    if real:
+        return real
+    # shortcut: the first X-Forwarded-For entry can be faked by the caller; fine as a fallback off Render
+    return request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
+        request.client.host if request.client else "unknown")
+
+
 def check_rate_limit(ip: str):
     """Check if IP has exceeded login rate limit."""
     now = time.time()
+    if len(LOGIN_ATTEMPTS) > 10000:  # don't let old addresses pile up forever
+        LOGIN_ATTEMPTS.clear()
     # Clean old attempts
     LOGIN_ATTEMPTS[ip] = [t for t in LOGIN_ATTEMPTS[ip] if now - t < WINDOW_SECONDS]
     if len(LOGIN_ATTEMPTS[ip]) >= MAX_ATTEMPTS:
-        raise HTTPException(status_code=429, detail="Too many login attempts. Try again later.")
+        raise HTTPException(status_code=429, detail="Too many attempts. Try again in a minute.")
     LOGIN_ATTEMPTS[ip].append(now)
 
 
@@ -45,9 +60,8 @@ def check_rate_limit(ip: str):
 
 @router.post("/login")
 def login(body: LoginRequest, request: Request, response: Response):
-    # Rate limit by IP
-    client_ip = request.client.host if request.client else "unknown"
-    check_rate_limit(client_ip)
+    # Rate limit by visitor; without Cloudflare's header everyone shares one counter, which still stops guessing
+    check_rate_limit(request.headers.get("cf-connecting-ip") or (request.client.host if request.client else "unknown"))
 
     if body.password != settings.admin_password:
         raise HTTPException(status_code=401, detail="Wrong password")
@@ -65,13 +79,20 @@ def login(body: LoginRequest, request: Request, response: Response):
 
 @router.delete("/logout")
 def logout(response: Response):
-    response.delete_cookie(COOKIE_NAME)
+    # must carry the same cross-site settings as the login cookie, or the browser ignores the delete
+    response.delete_cookie(COOKIE_NAME, httponly=True, samesite="none", secure=settings.secure_cookies)
     return {"ok": True}
 
 
 @router.get("/me")
 def me(authenticated: bool = Depends(require_admin)):
     return {"authenticated": True}
+
+
+def _must_match(sheet_name: str, row_num: int, item_id: str):
+    """Stop an edit or delete landing on the wrong row after someone else changed the sheet."""
+    if not row_has_id(sheet_name, row_num, item_id):
+        raise HTTPException(status_code=409, detail="This list has changed. Refresh the page and try again.")
 
 
 # ── Links CRUD ────────────────────────────────────────────────────────────────
@@ -97,6 +118,7 @@ def create_link(body: LinkCreate, authenticated: bool = Depends(require_admin)):
 
 @router.put("/links/{link_id}")
 def edit_link(link_id: str, body: LinkUpdate, row_num: int, authenticated: bool = Depends(require_admin)):
+    _must_match(SHEET_NAME, row_num, link_id)
     try:
         update_row(row_num, {
             "id": link_id,
@@ -113,6 +135,7 @@ def edit_link(link_id: str, body: LinkUpdate, row_num: int, authenticated: bool 
 
 @router.delete("/links/{link_id}")
 def remove_link(link_id: str, row_num: int, authenticated: bool = Depends(require_admin)):
+    _must_match(SHEET_NAME, row_num, link_id)
     try:
         delete_row(row_num)
         return {"ok": True}
@@ -130,6 +153,7 @@ async def upload_qr(
     authenticated: bool = Depends(require_admin),
 ):
     """Upload a custom QR image for a link. Stored in Cloudinary."""
+    _must_match(SHEET_NAME, row_num, link_id)
     try:
         contents = await file.read()
         url = upload_custom_qr(contents, link_id)
@@ -142,6 +166,7 @@ async def upload_qr(
 @router.delete("/links/{link_id}/qr")
 def remove_custom_qr(link_id: str, row_num: int, authenticated: bool = Depends(require_admin)):
     """Remove custom QR — app will auto-generate from URL instead."""
+    _must_match(SHEET_NAME, row_num, link_id)
     try:
         update_qr_image(row_num, "")
         return {"ok": True}
@@ -177,6 +202,7 @@ def edit_announcement(
     row_num: int,
     authenticated: bool = Depends(require_admin)
 ):
+    _must_match(ANNOUNCEMENTS_SHEET_NAME, row_num, announcement_id)
     try:
         update_announcement(row_num, {
             "id": announcement_id,
@@ -191,6 +217,7 @@ def edit_announcement(
 
 @router.delete("/announcements/{announcement_id}")
 def remove_announcement(announcement_id: str, row_num: int, authenticated: bool = Depends(require_admin)):
+    _must_match(ANNOUNCEMENTS_SHEET_NAME, row_num, announcement_id)
     try:
         delete_announcement(row_num)
         return {"ok": True}
@@ -226,6 +253,7 @@ def edit_giving_account(
     row_num: int,
     authenticated: bool = Depends(require_admin)
 ):
+    _must_match(GIVING_SHEET_NAME, row_num, account_id)
     try:
         update_giving_account(row_num, {
             "id": account_id,
@@ -241,6 +269,7 @@ def edit_giving_account(
 
 @router.delete("/giving/{account_id}")
 def remove_giving_account(account_id: str, row_num: int, authenticated: bool = Depends(require_admin)):
+    _must_match(GIVING_SHEET_NAME, row_num, account_id)
     try:
         delete_giving_account(row_num)
         return {"ok": True}
@@ -264,8 +293,9 @@ def list_orders(authenticated: bool = Depends(require_admin)):
     try:
         return [{
             "ref": str(o["ref"]), "time": _lagos_time(str(o["time"])), "name": str(o["name"]), "items": str(o["items"]),
-            "count": sum(int(line.rsplit(" x", 1)[1]) for line in str(o["items"]).split("; ")),
+            "count": sum(qty for _, qty in parse_items(str(o["items"]))),
             "total": int(o["total"] or o["books_total"]),
+            "short": str(o["status"]) != "paid",  # paid, but the last copy went to someone else
         } for o in get_paid_orders()]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

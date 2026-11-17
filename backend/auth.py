@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta, timezone
-from fastapi import HTTPException, Cookie, Depends
+from fastapi import HTTPException, Cookie, Request
 import jwt
 from typing import Optional
 from config import get_settings
@@ -23,7 +23,11 @@ def verify_token(token: str) -> bool:
 
 
 
-def require_admin(infodesk_token: Optional[str] = Cookie(default=None)):
+def require_admin(request: Request, infodesk_token: Optional[str] = Cookie(default=None)):
+    # another website can make the browser send our cookie with a form post, but it can't fake the Origin header
+    if request.method not in ("GET", "HEAD", "OPTIONS") and request.headers.get("origin") not in [
+            u.strip() for u in settings.frontend_url.split(",")]:
+        raise HTTPException(status_code=403, detail="Not allowed from this site")
     if not infodesk_token or not verify_token(infodesk_token):
         raise HTTPException(status_code=401, detail="Not authenticated")
     return True

@@ -1,8 +1,8 @@
+import logging
 from fastapi import APIRouter, HTTPException, Request
-from fastapi.responses import Response
 from services.sheets import get_all_rows, get_all_announcements, get_all_giving_accounts
-from services.qr import generate_qr_bytes
 from services import ezra
+from routers.admin import client_ip
 from models import Link, Announcement, GivingAccount, ChatRequest
 from typing import List
 
@@ -15,27 +15,9 @@ def get_links():
     try:
         rows = get_all_rows(include_hidden=False)
         return rows
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
-
-
-@router.get("/links/{link_id}/qr.png")
-def get_qr_image(link_id: str):
-    """
-    Auto-generate and return a QR code PNG for a given link.
-    The frontend calls this when no custom qr_image is set.
-    """
-    try:
-        rows = get_all_rows(include_hidden=True)
-        link = next((r for r in rows if r["id"] == link_id), None)
-        if not link:
-            raise HTTPException(status_code=404, detail="Link not found")
-        img_bytes = generate_qr_bytes(link["url"])
-        return Response(content=img_bytes, media_type="image/png")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logging.exception("public request failed")
+        raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 
 
 @router.get("/announcements", response_model=List[Announcement])
@@ -43,8 +25,9 @@ def get_announcements():
     """Return all active announcements for the public directory."""
     try:
         return get_all_announcements(include_hidden=False)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logging.exception("public request failed")
+        raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 
 
 @router.get("/giving", response_model=List[GivingAccount])
@@ -52,17 +35,16 @@ def get_giving_accounts():
     """Return all active giving accounts for the public directory."""
     try:
         return get_all_giving_accounts(include_hidden=False)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    except Exception:
+        logging.exception("public request failed")
+        raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")
 
 
 @router.post("/chat")
 def chat(body: ChatRequest, request: Request):
     """Ezra: answer a visitor's question from the links, announcements and Q&A sheet."""
-    # Render sits behind a proxy, so the visitor's address is in X-Forwarded-For
-    ip = request.headers.get("x-forwarded-for", "").split(",")[0].strip() or (
-        request.client.host if request.client else "unknown")
     try:
-        return ezra.answer(body.question, ip)
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        return ezra.answer(body.question, client_ip(request))
+    except Exception:
+        logging.exception("public request failed")
+        raise HTTPException(status_code=500, detail="Something went wrong. Please try again.")

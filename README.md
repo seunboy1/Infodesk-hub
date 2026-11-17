@@ -86,6 +86,7 @@ GOOGLE_SERVICE_ACCOUNT_JSON=  # paste entire JSON from Step 2 as one line
 ADMIN_PASSWORD=               # choose a strong password
 JWT_SECRET=                   # any 64-char random string
 CLOUDINARY_URL=               # cloudinary://API_KEY:API_SECRET@CLOUD_NAME
+REVALIDATE_SECRET=            # any long random text; set the same value as REVALIDATE_SECRET on Vercel
 FRONTEND_URL=http://localhost:3000
 SECURE_COOKIES=false          # set true in production (HTTPS)
 ```

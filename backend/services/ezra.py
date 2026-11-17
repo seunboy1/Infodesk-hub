@@ -136,6 +136,8 @@ def _knowledge():
 def answer(question: str, ip: str) -> dict:
     links, announcements, qa = _knowledge()
     now = time.time()
+    if len(AI_CALLS) > 10000:  # don't let old addresses pile up forever
+        AI_CALLS.clear()
     AI_CALLS[ip] = [t for t in AI_CALLS[ip] if now - t < 3600]
     use_ai = bool(_providers()) and len(AI_CALLS[ip]) < AI_MAX_PER_HOUR
     if use_ai:

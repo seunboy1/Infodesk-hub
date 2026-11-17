@@ -395,7 +395,7 @@ export default function Dashboard() {
                     <span>{o.ref}</span>
                     <span>₦{o.total.toLocaleString()}</span>
                     <span>{o.count}</span>
-                    <span>{o.items}</span>
+                    <span>{o.items}{o.short && ' · SHORT OF STOCK'}</span>
                   </div>
                 ))}
               </div>

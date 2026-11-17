@@ -32,6 +32,9 @@ class Settings(BaseSettings):
     squad_secret_key: str = ""
     squad_base_url: str = "https://sandbox-api-d.squadco.com"
 
+    # Shared with the site (REVALIDATE_SECRET on Vercel) so admin saves can refresh the saved pages
+    revalidate_secret: str = ""
+
     # Security
     secure_cookies: bool = False  # Set True in production (HTTPS)
 
