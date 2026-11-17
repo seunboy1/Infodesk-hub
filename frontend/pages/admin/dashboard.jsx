@@ -7,7 +7,8 @@ import {
   adminFetchAnnouncements, createAnnouncement,
   updateAnnouncement, deleteAnnouncement,
   adminFetchGivingAccounts, createGivingAccount,
-  updateGivingAccount, deleteGivingAccount
+  updateGivingAccount, deleteGivingAccount,
+  adminFetchOrders
 } from '../../lib/api'
 import { ensureProtocol } from '../../lib/utils'
 import styles from '../../styles/Admin.module.css'
@@ -49,11 +50,15 @@ export default function Dashboard() {
   const [givingSaving, setGivingSaving] = useState(false)
   const [givingDeleteConfirm, setGivingDeleteConfirm] = useState(null)
 
+  // Book desk: paid book orders
+  const [orders, setOrders] = useState([])
+
   useEffect(() => {
     checkAuth().catch(() => router.push('/admin'))
     loadLinks()
     loadAnnouncements()
     loadGivingAccounts()
+    loadOrders()
   }, [])
 
   function showToast(msg, type = 'success') {
@@ -215,6 +220,16 @@ export default function Dashboard() {
     }
   }
 
+  // ── Book Desk ───────────────────────────────────────────────────────────────
+
+  async function loadOrders() {
+    try {
+      setOrders(await adminFetchOrders())
+    } catch {
+      // silently fail
+    }
+  }
+
   // ── Giving Accounts ─────────────────────────────────────────────────────────
 
   async function loadGivingAccounts() {
@@ -320,6 +335,16 @@ export default function Dashboard() {
               <span className={styles.dashNavBadge}>{givingAccounts.length}</span>
             )}
           </button>
+          <button
+            className={`${styles.dashNavItem} ${activeView === 'desk' ? styles.dashNavActive : ''}`}
+            onClick={() => { setActiveView('desk'); loadOrders() }}
+          >
+            <span className={styles.dashNavIcon}>📚</span>
+            <span>Book Desk</span>
+            {orders.length > 0 && (
+              <span className={styles.dashNavBadge}>{orders.length}</span>
+            )}
+          </button>
         </nav>
 
         <div className={styles.dashSidebarFooter}>
@@ -336,7 +361,47 @@ export default function Dashboard() {
 
       {/* Main Content */}
       <div className={styles.dashContent}>
-        {activeView === 'giving' ? (
+        {activeView === 'desk' ? (
+          <>
+            <header className={styles.contentHeader}>
+              <h1 className={styles.contentTitle}>Book Desk</h1>
+              <p className={styles.contentSubtitle}>Paid book orders, newest first</p>
+            </header>
+
+            <main className={styles.dashMain}>
+              <div className={styles.dashHeader}>
+                <span></span>
+                <button className={styles.addBtn} onClick={loadOrders}>Refresh</button>
+              </div>
+
+              <div className={styles.table}>
+                <div className={styles.tableHead} style={{ gridTemplateColumns: '150px 1fr 140px 110px 70px 2fr' }}>
+                  <span>Time</span>
+                  <span>Name</span>
+                  <span>Code</span>
+                  <span>Amount</span>
+                  <span>Copies</span>
+                  <span>Books</span>
+                </div>
+
+                {orders.length === 0 && (
+                  <div className={styles.tableEmpty}>No paid orders yet.</div>
+                )}
+
+                {orders.map(o => (
+                  <div key={o.ref} className={styles.tableRow} style={{ gridTemplateColumns: '150px 1fr 140px 110px 70px 2fr' }}>
+                    <span>{o.time}</span>
+                    <span>{o.name}</span>
+                    <span>{o.ref}</span>
+                    <span>₦{o.total.toLocaleString()}</span>
+                    <span>{o.count}</span>
+                    <span>{o.items}</span>
+                  </div>
+                ))}
+              </div>
+            </main>
+          </>
+        ) : activeView === 'giving' ? (
           <>
             {/* Account Numbers Header */}
             <header className={styles.contentHeader}>

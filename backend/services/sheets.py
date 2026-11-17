@@ -284,3 +284,10 @@ def get_order(ref: str) -> Optional[dict]:
 def set_order_paid(row_num: int, charge: int, total: int) -> None:
     ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
     ws.update(range_name=f"H{row_num}:J{row_num}", values=[[charge, total, "paid"]])  # charge, total, status
+
+
+def get_paid_orders() -> List[dict]:
+    """Paid orders for the admin book desk, newest first."""
+    ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
+    rows = ws.get_all_records(expected_headers=ORDERS_HEADERS)
+    return [r for r in reversed(rows) if r.get("status") == "paid"]

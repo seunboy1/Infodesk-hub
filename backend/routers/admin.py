@@ -1,6 +1,7 @@
 import uuid
 import time
 from collections import defaultdict
+from datetime import datetime, timedelta
 from fastapi import APIRouter, HTTPException, Depends, UploadFile, File, Response, Request
 from typing import List
 from models import (
@@ -11,7 +12,8 @@ from models import (
 from services.sheets import (
     get_all_rows, add_row, update_row, update_qr_image, delete_row,
     get_all_announcements, add_announcement, update_announcement, delete_announcement,
-    get_all_giving_accounts, add_giving_account, update_giving_account, delete_giving_account
+    get_all_giving_accounts, add_giving_account, update_giving_account, delete_giving_account,
+    get_paid_orders
 )
 from services.qr import upload_custom_qr
 from auth import create_token, require_admin
@@ -242,5 +244,28 @@ def remove_giving_account(account_id: str, row_num: int, authenticated: bool = D
     try:
         delete_giving_account(row_num)
         return {"ok": True}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── Book desk ──────────────────────────────────────────────────────────────────
+
+def _lagos_time(saved: str) -> str:
+    """Orders are saved in UTC; the desk reads Nigeria time (UTC+1, no clock changes)."""
+    try:
+        return (datetime.strptime(saved, "%Y-%m-%d %H:%M UTC") + timedelta(hours=1)).strftime("%d %b, %I:%M %p")
+    except ValueError:
+        return saved
+
+
+@router.get("/orders")
+def list_orders(authenticated: bool = Depends(require_admin)):
+    """Paid book orders, newest first, for the volunteer at the book desk."""
+    try:
+        return [{
+            "ref": str(o["ref"]), "time": _lagos_time(str(o["time"])), "name": str(o["name"]), "items": str(o["items"]),
+            "count": sum(int(line.rsplit(" x", 1)[1]) for line in str(o["items"]).split("; ")),
+            "total": int(o["total"] or o["books_total"]),
+        } for o in get_paid_orders()]
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

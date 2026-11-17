@@ -137,3 +137,6 @@ export const deleteGivingAccount = async (id, rowNum) => {
   await triggerRevalidation()
   return result
 }
+
+// Admin Book Desk
+export const adminFetchOrders = () => request('/admin/orders')
