@@ -221,3 +221,66 @@ def get_qa() -> List[dict]:
         for r in records
         if str(r.get("status", "")).strip().lower() in QA_USABLE and str(r.get("answer", "")).strip()
     ]
+
+
+# ── Bookstore ────────────────────────────────────────────────────────────────
+
+BOOKS_SHEET_NAME = "Books"
+BOOKS_HEADERS = ["id", "title", "author", "price", "stock", "description", "front_image", "back_image", "active"]
+ORDERS_SHEET_NAME = "Book Orders"
+ORDERS_HEADERS = ["ref", "time", "name", "phone", "email", "items", "books_total", "charge", "total", "status"]
+
+
+def _bookstore_worksheet(name: str, headers: List[str]) -> gspread.Worksheet:
+    spreadsheet = _get_spreadsheet()
+    try:
+        ws = spreadsheet.worksheet(name)
+    except gspread.WorksheetNotFound:
+        ws = spreadsheet.add_worksheet(title=name, rows=1000, cols=len(headers))
+        ws.append_row(headers)
+    return ws
+
+
+def get_books() -> List[dict]:
+    ws = _bookstore_worksheet(BOOKS_SHEET_NAME, BOOKS_HEADERS)
+    records = ws.get_all_records(expected_headers=BOOKS_HEADERS)
+    result = []
+    for i, row in enumerate(records, start=2):  # row 1 = headers
+        if str(row.get("active", "true")).lower() == "false":
+            continue
+        result.append({
+            "id": str(row.get("id", "")),
+            "title": str(row.get("title", "")),
+            "author": str(row.get("author", "")),
+            "price": int(row.get("price") or 0),
+            "stock": int(row.get("stock") or 0),
+            "description": str(row.get("description", "")),
+            "front_image": str(row.get("front_image", "")),
+            "back_image": str(row.get("back_image", "")),
+            "row_num": i,
+        })
+    return result
+
+
+def take_stock(row_num: int, qty: int) -> None:
+    ws = _bookstore_worksheet(BOOKS_SHEET_NAME, BOOKS_HEADERS)
+    left = int(ws.cell(row_num, 5).value or 0)  # column E = stock
+    ws.update_cell(row_num, 5, max(0, left - qty))
+
+
+def add_order(order: dict) -> None:
+    ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
+    ws.append_row([order[h] for h in ORDERS_HEADERS])
+
+
+def get_order(ref: str) -> Optional[dict]:
+    ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
+    cell = ws.find(ref, in_column=1)
+    if not cell:
+        return None
+    return {**dict(zip(ORDERS_HEADERS, ws.row_values(cell.row))), "row_num": cell.row}
+
+
+def set_order_status(row_num: int, status: str) -> None:
+    ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
+    ws.update_cell(row_num, len(ORDERS_HEADERS), status)  # last column = status

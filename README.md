@@ -139,6 +139,18 @@ order, and a provider with no key is skipped:
 
 With no keys set, Ezra still works by matching. `FRONTEND_URL` may list several sites, separated by commas.
 
+### Bookstore
+
+The page at `/bookstore` sells the books listed in the `Books` sheet tab and records every order in the
+`Book Orders` tab. Edit `price`, `stock` and `description` in the sheet; `stock` drops by itself when an
+order is paid. Payments go through Squad. Add these to the backend environment:
+
+- `SQUAD_SECRET_KEY` (without it, the Pay button reports that payments are not switched on)
+- `SQUAD_BASE_URL` (default is Squad's sandbox; set `https://api-d.squadco.com` to take real money)
+
+In the Squad dashboard, set the webhook address to `<backend address>/orders/webhook`. The first address
+in `FRONTEND_URL` is where buyers are sent back after paying.
+
 ---
 
 ## Using the app

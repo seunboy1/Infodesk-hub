@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import Optional
+from typing import List, Optional
 
 
 class LinkBase(BaseModel):
@@ -100,3 +100,17 @@ class AdminGivingAccount(GivingAccount):
 
 class ChatRequest(BaseModel):
     question: str = Field(min_length=1, max_length=500)
+
+
+# ── Bookstore ────────────────────────────────────────────────────────────────
+
+class OrderItem(BaseModel):
+    id: str = Field(min_length=1, max_length=40)
+    qty: int = Field(ge=1, le=10)
+
+
+class OrderRequest(BaseModel):
+    name: str = Field(min_length=2, max_length=80)
+    phone: str = Field(pattern=r"^\+?[0-9]{7,15}$")
+    email: str = Field(max_length=120, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    items: List[OrderItem] = Field(min_length=1, max_length=20)

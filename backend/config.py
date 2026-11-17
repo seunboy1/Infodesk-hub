@@ -28,6 +28,10 @@ class Settings(BaseSettings):
     openrouter_api_key: str = ""
     openrouter_model: str = "qwen/qwen3.7-flash"
 
+    # Bookstore payments (Squad). The sandbox address is the default; use https://api-d.squadco.com when live
+    squad_secret_key: str = ""
+    squad_base_url: str = "https://sandbox-api-d.squadco.com"
+
     # Security
     secure_cookies: bool = False  # Set True in production (HTTPS)
 

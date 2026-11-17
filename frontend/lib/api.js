@@ -36,6 +36,12 @@ export const askEzra = (question) =>
   request('/chat', { method: 'POST', body: JSON.stringify({ question }) })
 export const wakeBackend = () => request('/health').catch(() => {})
 
+// Bookstore
+export const fetchBooks = () => request('/books')
+export const createOrder = (order) =>
+  request('/orders', { method: 'POST', body: JSON.stringify(order) })
+export const fetchOrder = (ref) => request(`/orders/${encodeURIComponent(ref)}`)
+
 // Admin auth
 export const login = (password) =>
   request('/admin/login', { method: 'POST', body: JSON.stringify({ password }) })
