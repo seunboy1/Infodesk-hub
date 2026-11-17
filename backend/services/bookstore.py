@@ -26,7 +26,7 @@ def _auth() -> dict:
     return {"Authorization": f"Bearer {settings.squad_secret_key}"}
 
 
-def create_order(name: str, phone: str, email: str, items: Dict[str, int]) -> dict:
+def create_order(name: str, phone: str, email: str, items: Dict[str, int], page: str = "bookstore") -> dict:
     """items maps book id to quantity. Returns the order ref and Squad's payment page address."""
     if not settings.squad_secret_key:
         raise ValueError("Payments are not switched on yet.")
@@ -54,7 +54,7 @@ def create_order(name: str, phone: str, email: str, items: Dict[str, int]) -> di
             "initiate_type": "inline",
             "transaction_ref": ref,
             "customer_name": name,
-            "callback_url": f"{site}/bookstore?order={ref}",
+            "callback_url": f"{site}/{page}?order={ref}",
         },
         timeout=30,
     )
