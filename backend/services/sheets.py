@@ -281,6 +281,6 @@ def get_order(ref: str) -> Optional[dict]:
     return {**dict(zip(ORDERS_HEADERS, ws.row_values(cell.row))), "row_num": cell.row}
 
 
-def set_order_status(row_num: int, status: str) -> None:
+def set_order_paid(row_num: int, charge: int, total: int) -> None:
     ws = _bookstore_worksheet(ORDERS_SHEET_NAME, ORDERS_HEADERS)
-    ws.update_cell(row_num, len(ORDERS_HEADERS), status)  # last column = status
+    ws.update(range_name=f"H{row_num}:J{row_num}", values=[[charge, total, "paid"]])  # charge, total, status

@@ -57,4 +57,4 @@ def get_order(ref: str):
         raise HTTPException(status_code=404, detail="Order not found")
     count = sum(int(line.rsplit(" x", 1)[1]) for line in order["items"].split("; "))
     return {"ref": order["ref"], "status": order["status"], "items": order["items"],
-            "count": count, "total": int(order["total"])}
+            "count": count, "total": int(order["total"] or order["books_total"])}

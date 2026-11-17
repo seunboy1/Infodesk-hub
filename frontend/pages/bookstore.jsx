@@ -5,8 +5,6 @@ import s from '../styles/Bookstore.module.css'
 
 const naira = n => '₦' + n.toLocaleString('en-NG')
 const plural = n => `${n} book${n === 1 ? '' : 's'}`
-// Same sum as the backend: the buyer covers the payment charge so the church gets the full book price
-const chargeFor = t => Math.min(Math.ceil(t / (1 - 0.012)) - t, 1500)
 
 const Logo = () => (
   <span className={s.logo}>
@@ -46,7 +44,6 @@ export default function Bookstore({ books: saved = [] }) {
   const lines = books.filter(b => bag[b.id])
   const count = lines.reduce((n, b) => n + bag[b.id], 0)
   const booksTotal = lines.reduce((n, b) => n + b.price * bag[b.id], 0)
-  const charge = chargeFor(booksTotal)
 
   const setQty = (b, n) => setBag({ ...bag, [b.id]: Math.max(0, Math.min(n, b.stock, 10)) })
   const field = key => ({ value: form[key], onChange: e => setForm({ ...form, [key]: e.target.value }), required: true })
@@ -159,16 +156,14 @@ export default function Bookstore({ books: saved = [] }) {
                   </div>
                 ))}
                 <dl className={s.sums}>
-                  <dt>Books</dt><dd>{naira(booksTotal)}</dd>
-                  <dt>Payment charge</dt><dd>{naira(charge)}</dd>
-                  <dt className={s.total}>Total</dt><dd className={s.total}>{naira(booksTotal + charge)}</dd>
+                  <dt className={s.total}>Total</dt><dd className={s.total}>{naira(booksTotal)}</dd>
                 </dl>
                 <label>Name<input autoComplete="name" minLength={2} maxLength={80} {...field('name')} /></label>
                 <label>Phone<input type="tel" autoComplete="tel" inputMode="tel" pattern="\+?[0-9]{7,15}" title="Digits only, for example 08031234567" {...field('phone')} /></label>
                 <label>Email<input type="email" autoComplete="email" maxLength={120} {...field('email')} /></label>
                 {error && <p className={s.error} role="alert">{error}</p>}
-                <button className={s.btn} disabled={busy}>{busy ? 'Opening payment…' : `Pay ${naira(booksTotal + charge)}`}</button>
-                <p className={s.note}>You choose card, bank transfer or USSD on the next page.</p>
+                <button className={s.btn} disabled={busy}>{busy ? 'Opening payment…' : `Pay ${naira(booksTotal)}`}</button>
+                <p className={s.note}>You choose card, bank transfer or USSD on the next page. The payment service adds its small charge there.</p>
               </>
             )}
           </form>

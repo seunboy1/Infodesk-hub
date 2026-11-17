@@ -5,7 +5,6 @@ marked paid after Squad itself confirms the money arrived.
 """
 import hashlib
 import hmac
-import math
 import threading
 import uuid
 from datetime import datetime, timezone
@@ -18,17 +17,9 @@ from services import sheets
 
 settings = get_settings()
 
-FEE = 0.012     # Squad's cut on local payments, paid by the buyer
-FEE_CAP = 1500  # naira; Squad never takes more than this per payment
-
 # shortcut: one lock in one process stops the webhook and the return page both taking stock;
 # move to a real store if the backend ever runs as more than one instance.
 _confirming = threading.Lock()
-
-
-def charge_for(books_total: int) -> int:
-    """Naira added on top so that, after Squad's cut, the church still gets the full book price."""
-    return min(math.ceil(books_total / (1 - FEE)) - books_total, FEE_CAP)
 
 
 def _auth() -> dict:
@@ -49,8 +40,6 @@ def create_order(name: str, phone: str, email: str, items: Dict[str, int]) -> di
             raise ValueError(f"Only {book['stock']} left of {book['title']}.")
         lines.append(f"{book['title']} x{qty}")
         books_total += book["price"] * qty
-    charge = charge_for(books_total)
-    total = books_total + charge
     ref = "AJ" + uuid.uuid4().hex[:10].upper()
     site = settings.frontend_url.split(",")[0].strip()
 
@@ -58,7 +47,8 @@ def create_order(name: str, phone: str, email: str, items: Dict[str, int]) -> di
         f"{settings.squad_base_url}/transaction/initiate",
         headers=_auth(),
         json={
-            "amount": total * 100,  # Squad counts in kobo
+            "amount": books_total * 100,  # Squad counts in kobo
+            "pass_charge": True,  # Squad adds its own fee on top for the buyer, so the church gets the full price
             "email": email,
             "currency": "NGN",
             "initiate_type": "inline",
@@ -76,7 +66,7 @@ def create_order(name: str, phone: str, email: str, items: Dict[str, int]) -> di
         "time": datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC"),
         "name": name, "phone": phone, "email": email,
         "items": "; ".join(lines),
-        "books_total": books_total, "charge": charge, "total": total,
+        "books_total": books_total, "charge": "", "total": "",  # filled in from Squad's figures once paid
         "status": "pending",
     })
     return {"ref": ref, "checkout_url": checkout_url}
@@ -90,12 +80,16 @@ def confirm(ref: str) -> Optional[dict]:
             return order
         r = httpx.get(f"{settings.squad_base_url}/transaction/verify/{ref}", headers=_auth(), timeout=30)
         data = (r.json().get("data") or {}) if r.status_code == 200 else {}
+        # paid means Squad says success AND the church's share covers the books (both figures are in kobo)
         paid = (str(data.get("transaction_status", "")).lower() == "success"
-                and int(data.get("transaction_amount") or 0) == int(order["total"]) * 100)
+                and int(data.get("merchant_amount") or 0) >= int(order["books_total"]) * 100)
         if paid:
+            # Squad reports its fee separately, in naira; the buyer paid the books plus that fee
+            charge = round(float(data.get("fee") or 0))
+            total = int(order["books_total"]) + charge
+            order.update(charge=charge, total=total, status="paid")
             # status first, so a repeat call can never take stock twice
-            sheets.set_order_status(order["row_num"], "paid")
-            order["status"] = "paid"
+            sheets.set_order_paid(order["row_num"], order["charge"], total)
             by_title = {b["title"]: b for b in sheets.get_books()}
             for line in order["items"].split("; "):
                 title, qty = line.rsplit(" x", 1)
@@ -114,11 +108,6 @@ def valid_signature(body: bytes, signature: str) -> bool:
 
 if __name__ == "__main__":
     # Self-check: python -m services.bookstore
-    assert charge_for(7500) == 92 and charge_for(15000) == 183, (charge_for(7500), charge_for(15000))
-    for books_total in (7500, 9000, 15000, 43500):
-        total = books_total + charge_for(books_total)
-        assert total - total * FEE >= books_total, books_total  # church never gets less than the book price
-    assert charge_for(500000) == FEE_CAP
     settings.squad_secret_key = "sandbox_sk_test"
     body = b'{"Event":"charge_successful"}'
     good = hmac.new(b"sandbox_sk_test", body, hashlib.sha512).hexdigest()
