@@ -113,19 +113,25 @@ export default function Bookstore({ books: saved = [] }) {
               const qty = bag[b.id] || 0
               return (
                 <article key={b.id} className={s.card}>
-                  <button type="button" className={`${s.cover} ${flipped[b.id] ? s.flipped : ''}`}
-                    aria-pressed={!!flipped[b.id]} aria-label={`Flip ${b.title} to see the back`}
-                    onClick={() => setFlipped({ ...flipped, [b.id]: !flipped[b.id] })}>
-                    <span className={s.inner}>
-                      <img className={s.face} src={b.front_image} alt="" />
-                      <span className={`${s.face} ${s.backFace}`}>
-                        {b.back_image
-                          ? <img src={b.back_image} alt="" />
-                          : <span className={s.blurb}><b>{b.title}</b><em>{b.author}</em>{b.description}</span>}
-                      </span>
-                    </span>
-                  </button>
-                  <small className={s.hint}>Tap the book to flip it</small>
+                  {/* only books with a real back cover photo can be flipped */}
+                  {b.back_image ? (
+                    <>
+                      <button type="button" className={`${s.cover} ${flipped[b.id] ? s.flipped : ''}`}
+                        aria-pressed={!!flipped[b.id]} aria-label={`Flip ${b.title} to see the back`}
+                        onClick={() => setFlipped({ ...flipped, [b.id]: !flipped[b.id] })}>
+                        <span className={s.inner}>
+                          <img className={s.face} src={b.front_image} alt="" />
+                          <img className={`${s.face} ${s.backFace}`} src={b.back_image} alt="" />
+                        </span>
+                      </button>
+                      <small className={s.hint}>Tap the book to flip it</small>
+                    </>
+                  ) : (
+                    <>
+                      <span className={s.cover}><span className={s.inner}><img className={s.face} src={b.front_image} alt="" /></span></span>
+                      <small className={s.hint}>{b.description}</small>
+                    </>
+                  )}
                   <h2>{b.title}</h2>
                   <div className={s.row}>
                     <b className={s.price}>{naira(b.price)}</b>
