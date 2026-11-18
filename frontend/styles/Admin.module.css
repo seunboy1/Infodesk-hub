@@ -314,6 +314,35 @@
 
 .tableEmpty { padding: 2.5rem; text-align: center; color: var(--ink3); font-size: 13px; }
 
+/* Book Desk: a dark card so paid orders stand out from the rest of the dashboard */
+.deskTitle { font-size: 20px; font-weight: 700; color: var(--ink); margin-bottom: 12px; }
+.desk { background: #1B1E22; color: #fff; border-radius: 14px; padding: 4px 22px; overflow: hidden; }
+.desk .tableEmpty { color: #9AA0A8; }
+.deskRow {
+  display: grid;
+  grid-template-columns: 150px 1.2fr 160px 2fr 70px 110px;
+  gap: 16px;
+  align-items: center;
+  padding: 18px 0;
+  font-size: 15px;
+  border-bottom: 1px solid #2A2E33;
+}
+.deskRow:last-child { border-bottom: none; }
+.deskHead { padding: 14px 0; font-size: 12px; font-weight: 600; color: #9AA0A8; text-transform: uppercase; letter-spacing: 0.6px; }
+.deskCode { letter-spacing: 0.5px; }
+.deskBook { display: block; line-height: 1.5; }
+.deskShort { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 20px; background: #E04E4D; font-size: 11px; font-style: normal; font-weight: 600; }
+.deskAmount { text-align: right; font-size: 16px; }
+.deskHead span:last-child { text-align: right; }
+
+@media (max-width: 900px) {
+  /* on a phone each order becomes a small card with its labels beside the values */
+  .deskHead { display: none; }
+  .deskRow { grid-template-columns: 1fr; gap: 6px; padding: 16px 0; }
+  .deskRow > *::before { content: attr(data-label) ": "; color: #9AA0A8; font-weight: 400; font-size: 12px; }
+  .deskAmount { text-align: left; }
+}
+
 .cellName { display: flex; flex-direction: column; gap: 2px; }
 .linkName { font-size: 13px; font-weight: 500; color: var(--ink); }
 .linkDesc { font-size: 11px; color: var(--ink3); }

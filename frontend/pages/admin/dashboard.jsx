@@ -374,14 +374,15 @@ export default function Dashboard() {
                 <button className={styles.addBtn} onClick={loadOrders}>Refresh</button>
               </div>
 
-              <div className={styles.table}>
-                <div className={styles.tableHead} style={{ gridTemplateColumns: '150px 1fr 140px 110px 70px 2fr' }}>
+              <h2 className={styles.deskTitle}>Paid orders</h2>
+              <div className={styles.desk}>
+                <div className={`${styles.deskRow} ${styles.deskHead}`}>
                   <span>Time</span>
-                  <span>Name</span>
-                  <span>Code</span>
-                  <span>Amount</span>
+                  <span>Buyer</span>
+                  <span>Order number</span>
+                  <span>Books (qty)</span>
                   <span>Copies</span>
-                  <span>Books</span>
+                  <span>Amount</span>
                 </div>
 
                 {orders.length === 0 && (
@@ -389,13 +390,17 @@ export default function Dashboard() {
                 )}
 
                 {orders.map(o => (
-                  <div key={o.ref} className={styles.tableRow} style={{ gridTemplateColumns: '150px 1fr 140px 110px 70px 2fr' }}>
-                    <span>{o.time}</span>
-                    <span>{o.name}</span>
-                    <span>{o.ref}</span>
-                    <span>₦{o.total.toLocaleString()}</span>
-                    <span>{o.count}</span>
-                    <span>{o.items}{o.short && ' · SHORT OF STOCK'}</span>
+                  <div key={o.ref} className={styles.deskRow}>
+                    <span data-label="Time">{o.time}</span>
+                    <b data-label="Buyer">{o.name}</b>
+                    <span data-label="Order number" className={styles.deskCode}>{o.ref}</span>
+                    <span data-label="Books (qty)">
+                      {/* "Love Code x2; Purposefully x1" becomes one book per line */}
+                      {o.items.split('; ').map(line => <span key={line} className={styles.deskBook}>{line.replace(/ x(\d+)$/, ' (×$1)')}</span>)}
+                      {o.short && <em className={styles.deskShort}>Short of stock</em>}
+                    </span>
+                    <span data-label="Copies">{o.count}</span>
+                    <b data-label="Amount" className={styles.deskAmount}>₦{o.total.toLocaleString()}</b>
                   </div>
                 ))}
               </div>
