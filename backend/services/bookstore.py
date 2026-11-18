@@ -64,6 +64,9 @@ def create_order(name: str, phone: str, email: str, items: Dict[str, int]) -> di
             "transaction_ref": ref,
             "customer_name": name,
             "callback_url": f"{site}/bookstore?order={ref}",
+            # Squad's test mode shows a bank account number for transfers that nobody should send real money to,
+            # so while testing only the card option (with its pretend Success/Declined cards) is offered
+            **({"payment_channels": ["card"]} if "sandbox" in settings.squad_base_url else {}),
         },
         timeout=30,
     )
