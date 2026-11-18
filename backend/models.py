@@ -107,6 +107,31 @@ class OrderItem(BaseModel):
 
 class OrderRequest(BaseModel):
     name: str = Field(min_length=2, max_length=80)
-    phone: str = Field(pattern=r"^\+?[0-9]{7,15}$")
-    email: str = Field(max_length=120, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
+    # a Nigerian mobile (0803…, 234803… or +234803…), or any other country's number written with its + code
+    phone: str = Field(pattern=r"^(0[789][01][0-9]{8}|\+?234[789][01][0-9]{8}|\+[1-9][0-9]{9,14})$")
+    # name@domain.tld: no spaces, no double dots, and an ending of at least two letters
+    email: str = Field(max_length=120, pattern=r"^[A-Za-z0-9._%+\-]+@([A-Za-z0-9\-]+\.)+[A-Za-z]{2,}$")
     items: List[OrderItem] = Field(min_length=1, max_length=20)
+
+
+if __name__ == "__main__":
+    # Self-check: python models.py
+    from pydantic import ValidationError
+
+    def accepted(**change) -> bool:
+        order = {"name": "Ada Obi", "phone": "08031234567", "email": "ada@example.com", "items": [{"id": "x", "qty": 1}]}
+        try:
+            OrderRequest(**{**order, **change})
+            return True
+        except ValidationError:
+            return False
+
+    for phone in ["08031234567", "09012345678", "+2348031234567", "2348031234567", "+447911123456"]:
+        assert accepted(phone=phone), f"should accept phone {phone}"
+    for phone in ["123456", "1234567", "0803123456", "080312345678", "01234567890", "0803 123 4567", "abcdefghijk", ""]:
+        assert not accepted(phone=phone), f"should reject phone {phone!r}"
+    for email in ["ada@example.com", "a.b+shop@stu.cu.edu.ng"]:
+        assert accepted(email=email), f"should accept email {email}"
+    for email in ["ada", "ada@example", "a@b.c", "ada @example.com", "ada@@example.com", "ada@example..com", "@example.com", "ada@.com", ""]:
+        assert not accepted(email=email), f"should reject email {email!r}"
+    print("models self-check ok")

@@ -63,8 +63,7 @@ export default function Bookstore({ books: saved = [] }) {
 
   const header = (
     <header className={s.header}>
-      <a className={s.brand} href="/bookstore"><Logo />Ajah Bookstore</a>
-      <a className={s.home} href="/">Info Desk</a>
+      <a className={s.brand} href="/bookstore"><Logo />Bookstore</a>
     </header>
   )
 
@@ -159,8 +158,8 @@ export default function Bookstore({ books: saved = [] }) {
                   <dt className={s.total}>Total</dt><dd className={s.total}>{naira(booksTotal)}</dd>
                 </dl>
                 <label>Name<input autoComplete="name" minLength={2} maxLength={80} {...field('name')} /></label>
-                <label>Phone<input type="tel" autoComplete="tel" inputMode="tel" pattern="\+?[0-9]{7,15}" title="Digits only, for example 08031234567" {...field('phone')} /></label>
-                <label>Email<input type="email" autoComplete="email" maxLength={120} {...field('email')} /></label>
+                <label>Phone<input type="tel" autoComplete="tel" inputMode="tel" pattern="0[789][01][0-9]{8}|\+?234[789][01][0-9]{8}|\+[1-9][0-9]{9,14}" title="An 11-digit phone number, for example 08031234567" {...field('phone')} /></label>
+                <label>Email<input type="email" autoComplete="email" maxLength={120} pattern="[A-Za-z0-9._%+\-]+@([A-Za-z0-9\-]+\.)+[A-Za-z]{2,}" title="A full email address, for example name@gmail.com" {...field('email')} /></label>
                 {error && <p className={s.error} role="alert">{error}</p>}
                 <button className={s.btn} disabled={busy}>{busy ? 'Opening payment…' : `Pay ${naira(booksTotal)}`}</button>
                 <p className={s.note}>You choose card, bank transfer or USSD on the next page.</p>

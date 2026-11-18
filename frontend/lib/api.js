@@ -8,7 +8,8 @@ async function request(path, options = {}) {
   })
   if (!res.ok) {
     const err = await res.json().catch(() => ({ detail: res.statusText }))
-    throw new Error(err.detail || 'Request failed')
+    // a rejected form comes back as a list of problems, not a sentence
+    throw new Error(typeof err.detail === 'string' ? err.detail : 'Please check your details and try again.')
   }
   return res.json()
 }

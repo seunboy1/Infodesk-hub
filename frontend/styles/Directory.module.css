@@ -170,7 +170,8 @@
   .annBar { margin-top: 12px; border-radius: 14px; }
   .annLabel { padding: 13px 12px; }
   .annLabel span { display: none; }
-  .annMove { font-size: 13.5px; }
+  .annMove { font-size: 12px; }
+  .annMove b { font-weight: 500; }
   .annAll { font-size: 12px; padding: 0 12px; }
   .sec { margin: 16px 0 8px; font-size: 11px; }
   .controls { flex-wrap: wrap; gap: 8px; }

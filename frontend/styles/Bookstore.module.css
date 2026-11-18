@@ -1,4 +1,4 @@
-/* Bookstore: the info desk red on a white page. */
+/* Bookstore: a white page under an info desk red header. */
 
 @keyframes roll { from { stroke-dashoffset: 260 } to { stroke-dashoffset: 0 } }
 
@@ -7,13 +7,14 @@
 .page h1 { font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 40px 80px; }
 
-.header { max-width: 1200px; margin: 0 auto; padding: 20px 40px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid var(--line); }
-.brand { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600; }
+/* red edge to edge, with the logo lined up with the page content below */
+.header { background: #E04E4D; padding: 16px max(40px, calc(50% - 560px)); display: flex; align-items: center; box-shadow: 0 2px 10px rgba(224, 78, 77, .3); }
+.brand { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 600; color: #fff; }
 .home { font-size: 14px; font-weight: 500; color: var(--muted); padding: 10px 4px; }
 .home:hover { color: #E04E4D; }
-/* the info desk logo, with its line always rolling */
-.logo { width: 44px; height: 44px; border-radius: 50%; background: #E04E4D; display: grid; place-items: center; flex: none; }
-.logo svg { width: 66%; fill: none; stroke: #fff; stroke-width: 6; stroke-linecap: round; }
+/* the info desk logo turned inside out for the red header, with its line always rolling */
+.logo { width: 44px; height: 44px; border-radius: 50%; background: #fff; display: grid; place-items: center; flex: none; }
+.logo svg { width: 66%; fill: none; stroke: #E04E4D; stroke-width: 6; stroke-linecap: round; }
 .logo path { stroke-dasharray: 90 170; animation: roll 1.3s linear infinite; }
 
 .cols { display: grid; grid-template-columns: 1fr 340px; gap: 28px; align-items: start; margin-top: 24px; }
@@ -73,7 +74,7 @@
 
 @media (max-width: 800px) {
   .page h1 { font-size: 26px; }
-  .header { padding: 14px 16px; }
+  .header { padding: 12px 16px; }
   .brand { font-size: 19px; }
   .wrap { padding: 20px 16px 110px; }
   .cols { grid-template-columns: 1fr; }
