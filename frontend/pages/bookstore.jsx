@@ -163,7 +163,7 @@ export default function Bookstore({ books: saved = [] }) {
                 <label>Email<input type="email" autoComplete="email" maxLength={120} {...field('email')} /></label>
                 {error && <p className={s.error} role="alert">{error}</p>}
                 <button className={s.btn} disabled={busy}>{busy ? 'Opening payment…' : `Pay ${naira(booksTotal)}`}</button>
-                <p className={s.note}>You choose card, bank transfer or USSD on the next page. The payment service adds its small charge there.</p>
+                <p className={s.note}>You choose card, bank transfer or USSD on the next page.</p>
               </>
             )}
           </form>

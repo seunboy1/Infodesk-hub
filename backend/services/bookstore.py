@@ -57,7 +57,7 @@ def create_order(name: str, phone: str, email: str, items: Dict[str, int]) -> di
         headers=_auth(),
         json={
             "amount": books_total * 100,  # Squad counts in kobo
-            "pass_charge": True,  # Squad adds its own fee on top for the buyer, so the church gets the full price
+            "pass_charge": False,  # the church carries Squad's fee, so the buyer pays the plain book price
             "email": email,
             "currency": "NGN",
             "initiate_type": "inline",
@@ -89,13 +89,13 @@ def confirm(ref: str) -> Optional[dict]:
             return order
         r = httpx.get(f"{settings.squad_base_url}/transaction/verify/{ref}", headers=_auth(), timeout=30)
         data = (r.json().get("data") or {}) if r.status_code == 200 else {}
-        # paid means Squad says success AND the church's share covers the books (both figures are in kobo)
+        # paid means Squad says success AND the amount paid covers the books (both figures are in kobo)
         paid = (str(data.get("transaction_status", "")).lower() == "success"
-                and int(data.get("merchant_amount") or 0) >= int(order["books_total"]) * 100)
+                and int(data.get("transaction_amount") or 0) >= int(order["books_total"]) * 100)
         if paid:
-            # Squad reports its fee separately, in naira; the buyer paid the books plus that fee
+            # Squad reports its fee in naira and keeps it from the church's share; the buyer paid the book price
             charge = round(float(data.get("fee") or 0))
-            total = int(order["books_total"]) + charge
+            total = int(order["books_total"])
             by_title = {b["title"]: b for b in sheets.get_books()}
             stock, short = {}, False
             for title, qty in parse_items(order["items"]):
@@ -144,13 +144,13 @@ if __name__ == "__main__":
 
     real_sheets, real_httpx = sheets, httpx
     try:
-        ok = {"transaction_status": "Success", "merchant_amount": 1500000, "fee": 150}
+        ok = {"transaction_status": "Success", "transaction_amount": 1500000, "merchant_amount": 1485000, "fee": 150}
         sheets, httpx = FakeSheets(5), FakeSquad(ok)
-        assert confirm("R1")["status"] == "paid" and sheets.stock == 3 and sheets.order["total"] == 15150
+        assert confirm("R1")["status"] == "paid" and sheets.stock == 3 and sheets.order["total"] == 15000 and sheets.order["charge"] == 150
         assert confirm("R1")["status"] == "paid" and sheets.writes == 1  # a second call takes no more stock
         sheets, httpx = FakeSheets(1), FakeSquad(ok)
         assert confirm("R1")["status"] == "paid - short" and sheets.stock == 0
-        sheets, httpx = FakeSheets(5), FakeSquad({**ok, "merchant_amount": 1499900})
+        sheets, httpx = FakeSheets(5), FakeSquad({**ok, "transaction_amount": 1499900})
         assert confirm("R1")["status"] == "pending" and sheets.writes == 0  # underpaid
         sheets, httpx = FakeSheets(5), FakeSquad({**ok, "transaction_status": "failed"})
         assert confirm("R1")["status"] == "pending"
