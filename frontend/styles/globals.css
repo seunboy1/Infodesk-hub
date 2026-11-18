@@ -34,6 +34,9 @@
   --radius-sm: 8px;
 }
 
+/* iPhone Safari enlarges text on long unbroken lines (the announcement ticker); keep sizes as written */
+/* only the -webkit- spelling: iPhone Safari ignores the plain one, and the build drops -webkit- when both are written */
+html { -webkit-text-size-adjust: 100%; }
 html, body { height: 100%; }
 body {
   font-family: 'DM Sans', sans-serif;
