@@ -12,8 +12,7 @@ const Logo = () => (
   </span>
 )
 
-// `path` is where this copy of the shop lives; the dark copy passes its own path and dark=true
-export default function Bookstore({ books: saved = [], path = '/bookstore', dark = false }) {
+export default function Bookstore({ books: saved = [] }) {
   const [books, setBooks] = useState(saved)
   const [bag, setBag] = useState({}) // book id -> copies
   const [flipped, setFlipped] = useState({})
@@ -54,7 +53,7 @@ export default function Bookstore({ books: saved = [], path = '/bookstore', dark
     setBusy(true)
     setError('')
     try {
-      const r = await createOrder({ ...form, page: path.slice(1), items: lines.map(b => ({ id: b.id, qty: bag[b.id] })) })
+      const r = await createOrder({ ...form, items: lines.map(b => ({ id: b.id, qty: bag[b.id] })) })
       window.location.href = r.checkout_url
     } catch (err) {
       setError(err.message)
@@ -64,14 +63,14 @@ export default function Bookstore({ books: saved = [], path = '/bookstore', dark
 
   const header = (
     <header className={s.header}>
-      <a className={s.brand} href={path}><Logo />Ajah Bookstore</a>
+      <a className={s.brand} href="/bookstore"><Logo />Ajah Bookstore</a>
       <a className={s.home} href="/">Info Desk</a>
     </header>
   )
 
   if (ref) {
     return (
-      <div className={`${s.page} ${dark ? s.dark : ''}`}>
+      <div className={s.page}>
         {header}
         <main className={s.done} aria-live="polite">
           {!order && <p className={s.wait}>Checking your payment…</p>}
@@ -84,7 +83,7 @@ export default function Bookstore({ books: saved = [], path = '/bookstore', dark
               <span className={s.check} aria-hidden="true">✓</span>
               <h1>Payment confirmed</h1>
               <p>Order {order.ref} · {plural(order.count)} · {naira(order.total)}</p>
-              <a className={s.btn} href={path}>Back to bookstore</a>
+              <a className={s.btn} href="/bookstore">Back to bookstore</a>
             </>
           )}
           {order && order.status !== 'paid' && (
@@ -92,7 +91,7 @@ export default function Bookstore({ books: saved = [], path = '/bookstore', dark
               <h1>We haven't received this payment yet</h1>
               <p>If you have paid, give it a moment and check again. Your order number is {ref}.</p>
               <button className={s.btn} onClick={() => check(ref)}>Check again</button>
-              <a className={s.home} href={path}>Back to bookstore</a>
+              <a className={s.home} href="/bookstore">Back to bookstore</a>
             </>
           )}
         </main>
@@ -101,7 +100,7 @@ export default function Bookstore({ books: saved = [], path = '/bookstore', dark
   }
 
   return (
-    <div className={`${s.page} ${dark ? s.dark : ''}`}>
+    <div className={s.page}>
       {header}
       <main className={s.wrap}>
         <h1>Take the words home with you.</h1>

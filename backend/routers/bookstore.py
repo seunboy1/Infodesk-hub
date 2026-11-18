@@ -26,7 +26,7 @@ def create_order(body: OrderRequest, request: Request):
     for item in body.items:
         items[item.id] = items.get(item.id, 0) + item.qty
     try:
-        return bookstore.create_order(body.name.strip(), body.phone, body.email, items, body.page)
+        return bookstore.create_order(body.name.strip(), body.phone, body.email, items)
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception:

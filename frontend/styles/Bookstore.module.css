@@ -1,9 +1,8 @@
-/* Bookstore: the info desk red on a white page, or on the info desk's dark page when .dark is added. */
+/* Bookstore: the info desk red on a white page. */
 
 @keyframes roll { from { stroke-dashoffset: 260 } to { stroke-dashoffset: 0 } }
 
 .page { --bg: #fff; --ink: #0B0E10; --muted: #6B7078; --soft: #3A3F45; --card: #F5F6F7; --line: #ECEDEF; --field: #fff; --field-line: #D5D8DC; --pill: #E9EAEC; --tint: #FCEBEB; --off: #C5C8CD; --error: #B3261E; }
-.dark { --bg: #0B0E10; --ink: #fff; --muted: #9AA0A8; --soft: #D6D8DC; --card: #222528; --line: #2A2E33; --field: #15181B; --field-line: #4A4E55; --pill: #2A2E33; --tint: #3A2324; --off: #4A4E55; --error: #FF8A80; }
 .page { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
 .page h1 { font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 40px 80px; }

@@ -1,5 +1,5 @@
 from pydantic import BaseModel, Field
-from typing import List, Literal, Optional
+from typing import List, Optional
 
 
 class LinkBase(BaseModel):
@@ -110,4 +110,3 @@ class OrderRequest(BaseModel):
     phone: str = Field(pattern=r"^\+?[0-9]{7,15}$")
     email: str = Field(max_length=120, pattern=r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
     items: List[OrderItem] = Field(min_length=1, max_length=20)
-    page: Literal["bookstore", "bookstore-dark"] = "bookstore"  # which copy of the shop to return the buyer to
