@@ -3,6 +3,8 @@ import time
 import gspread
 from functools import lru_cache
 from google.oauth2.service_account import Credentials
+from requests.adapters import HTTPAdapter
+from urllib3.util.retry import Retry
 from typing import List, Optional
 from config import get_settings
 
@@ -24,7 +26,10 @@ def _get_client() -> gspread.Client:
     """Cached Google Sheets client - reused across requests."""
     creds_dict = json.loads(settings.google_service_account_json)
     creds = Credentials.from_service_account_info(creds_dict, scopes=SCOPES)
-    return gspread.authorize(creds)
+    client = gspread.authorize(creds)
+    # Google drops a connection left idle for a while, and the next request on it fails; try once more
+    client.http_client.session.mount("https://", HTTPAdapter(max_retries=Retry(total=1, allowed_methods=None)))
+    return client
 
 
 @lru_cache(maxsize=1)
