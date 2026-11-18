@@ -26,6 +26,9 @@ settings = get_settings()
 
 COOKIE_NAME = "infodesk_token"
 COOKIE_MAX_AGE = 60 * 60 * 8  # 8 hours
+# Live, the site and the backend are on different domains, which needs "none" plus HTTPS.
+# Browsers throw away a "none" cookie sent without HTTPS, so on a laptop (plain http) use "lax".
+SAMESITE = "none" if settings.secure_cookies else "lax"
 
 # Rate limiting for login: max 5 attempts per minute per IP
 LOGIN_ATTEMPTS = defaultdict(list)
@@ -70,7 +73,7 @@ def login(body: LoginRequest, request: Request, response: Response):
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        samesite="none",  # Changed from "lax" to "none" for cross-origin
+        samesite=SAMESITE,
         secure=settings.secure_cookies,
         max_age=COOKIE_MAX_AGE,
     )
@@ -80,7 +83,7 @@ def login(body: LoginRequest, request: Request, response: Response):
 @router.delete("/logout")
 def logout(response: Response):
     # must carry the same cross-site settings as the login cookie, or the browser ignores the delete
-    response.delete_cookie(COOKIE_NAME, httponly=True, samesite="none", secure=settings.secure_cookies)
+    response.delete_cookie(COOKIE_NAME, httponly=True, samesite=SAMESITE, secure=settings.secure_cookies)
     return {"ok": True}
 
 
