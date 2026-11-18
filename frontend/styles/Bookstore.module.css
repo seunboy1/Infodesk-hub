@@ -4,7 +4,8 @@
 
 .page { --bg: #fff; --ink: #0B0E10; --muted: #6B7078; --soft: #3A3F45; --card: #F5F6F7; --line: #ECEDEF; --field: #fff; --field-line: #D5D8DC; --pill: #E9EAEC; --tint: #FCEBEB; --off: #C5C8CD; --error: #B3261E; }
 .page { min-height: 100vh; background: var(--bg); color: var(--ink); font-family: Inter, system-ui, sans-serif; }
-.page h1 { font-size: 34px; font-weight: 700; letter-spacing: -.02em; }
+/* the heading shrinks with the screen, between 20px on a small phone and 34px on a laptop */
+.page h1 { font-size: clamp(20px, 5.4vw, 34px); font-weight: 700; letter-spacing: -.02em; }
 .wrap { max-width: 1200px; margin: 0 auto; padding: 28px 40px 80px; }
 
 /* red edge to edge, with the logo lined up with the page content below */
@@ -73,7 +74,6 @@
 .check { width: 46px; height: 46px; border-radius: 50%; background: #E04E4D; color: #fff; font-size: 24px; display: grid; place-items: center; }
 
 @media (max-width: 800px) {
-  .page h1 { font-size: 26px; }
   .header { padding: 12px 16px; }
   .brand { font-size: 19px; }
   .wrap { padding: 20px 16px 110px; }
