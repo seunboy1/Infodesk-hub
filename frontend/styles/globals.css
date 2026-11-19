@@ -38,6 +38,11 @@
 /* only the -webkit- spelling: iPhone Safari ignores the plain one, and the build drops -webkit- when both are written */
 html { -webkit-text-size-adjust: 100%; }
 html, body { height: 100%; }
+/* iPhone Safari zooms the whole page into any text box under 16px when it is tapped, pushing the layout sideways.
+   !important because each page's own box styles are more specific than this rule. */
+@media (max-width: 900px) {
+  input, textarea, select { font-size: 16px !important; }
+}
 body {
   font-family: 'DM Sans', sans-serif;
   background: var(--surface);

@@ -218,6 +218,7 @@
 
 .dashContent {
   flex: 1;
+  min-width: 0; /* without this, a long link address widens the whole page past the phone screen */
   margin-left: 240px;
   display: flex;
   flex-direction: column;
